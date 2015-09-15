@@ -1,0 +1,9 @@
+*.pro.user*
+*.o
+moc_*
+stitch_cfg.xml
+ui_*.h
+ids-qt
+Makefile
+debug/
+release/
