@@ -13,25 +13,6 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QDialogButtonBox" name="displayCfgButtonBox">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>360</y>
-     <width>181</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-   <property name="centerButtons">
-    <bool>false</bool>
-   </property>
-  </widget>
   <widget class="QListWidget" name="listWidget_res">
    <property name="enabled">
     <bool>true</bool>
@@ -160,18 +141,37 @@
     </rect>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton_preview">
+  <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>430</x>
+     <x>420</x>
      <y>330</y>
-     <width>80</width>
-     <height>23</height>
+     <width>178</width>
+     <height>62</height>
     </rect>
    </property>
-   <property name="text">
-    <string>preview</string>
-   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QPushButton" name="pushButton_preview">
+      <property name="text">
+       <string>identification</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QDialogButtonBox" name="displayCfgButtonBox">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="standardButtons">
+       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      </property>
+      <property name="centerButtons">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>
