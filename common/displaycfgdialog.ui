@@ -141,57 +141,28 @@
     </rect>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QDialogButtonBox" name="displayCfgButtonBox">
    <property name="geometry">
     <rect>
-     <x>420</x>
-     <y>330</y>
-     <width>178</width>
-     <height>62</height>
+     <x>421</x>
+     <y>347</y>
+     <width>176</width>
+     <height>27</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QPushButton" name="pushButton_preview">
-      <property name="text">
-       <string>identification</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QDialogButtonBox" name="displayCfgButtonBox">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="standardButtons">
-       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-      </property>
-      <property name="centerButtons">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-   </layout>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   </property>
+   <property name="centerButtons">
+    <bool>false</bool>
+   </property>
   </widget>
  </widget>
  <resources/>
  <connections>
-  <connection>
-   <sender>displayCfgButtonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>displayCfgDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>157</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>displayCfgButtonBox</sender>
    <signal>rejected()</signal>
@@ -204,6 +175,22 @@
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>displayCfgButtonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>displayCfgDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
      <y>274</y>
     </hint>
    </hints>

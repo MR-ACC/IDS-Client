@@ -1,23 +1,46 @@
 #include "idsserver.h"
 #include "ui_idsserver.h"
 
-void ids_io_fin_cb(gpointer priv)
+int idsServer::disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
 {
-    //((idsServer*)priv)->mIdsEndpoint = ids_create_remote_endpoint("192.168.1.56", 1702, ids_io_fin_cb, priv, NULL);
-    ((idsServer*)priv)->mIdsEndpoint = ids_create_remote_endpoint("192.168.1.56", 1702, ids_io_fin_cb, priv, NULL);
-    if (NULL == ((idsServer*)priv)->mIdsEndpoint)
-        throw QString("ids_io_fin_cb. ids_create_remote_endpoint failed");
+    if (pev->info.ptr == NULL)
+    {
+        emit ((idsServer *)priv)->idsPlayerStart();
+    }
+    else
+    {
+        emit ((idsServer *)priv)->idsPlayerStop();
+        ((idsServer *)priv)->mDispmodePreview = *((DisplayModeInfo *)pev->info.ptr);
+//        ((idsServer *)priv)->idsPlayerStopSlot();
+        ((idsServer *)priv)->repaint();
+    }
+
+    return EHR_ACCEPT;
 }
 
-int dis_cfg_mode_event_handle(IdsEvent *pev, gpointer priv)
+void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
-    Q_ASSERT(pev->info.ptr != NULL);
-
-    ((idsServer *)priv)->mDispModePreviewFlag = TRUE;
-    ((idsServer *)priv)->mDispModePreview = *((DisplayModeInfo *)pev->info.ptr);
-    ((idsServer *)priv)->repaint();
+    IdsLayoutAll*layout_all = (IdsLayoutAll *)buf;
+    if (sizeof(IdsLayoutAll) != buf_size)
+    {
+        Q_ASSERT (buf_size == sizeof(IdsResponse));
+        qDebug() << QString().sprintf("layout_cfg_get_cb timeout error. ret = %d", ((IdsResponse*)buf)->ret);
+    }
+    else
+        ((idsServer *)priv)->mLayoutAll = *layout_all;
 }
 
+void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
+{
+    IpcCfgAll *ipc_cfg_all = (IpcCfgAll *)buf;
+    if (sizeof(IpcCfgAll) != buf_size)
+    {
+        Q_ASSERT (buf_size == sizeof(IdsResponse));
+        qDebug() << QString().sprintf("ipc_cfg__get_cb timeout error. ret = %d", ((IdsResponse*)buf)->ret);
+    }
+    else
+        ((idsServer *)priv)->mIpcCfgAll = *ipc_cfg_all;
+}
 
 idsServer::idsServer(QWidget *parent) :
     QWidget(parent),
@@ -33,28 +56,31 @@ idsServer::idsServer(QWidget *parent) :
     this->setPalette(palette);
     this->ui->gridLayout->setMargin(0);
 
-    mChnConfig = new QAction(tr("通道配置 "), this);
-    mChnConfig->setIcon(QIcon(":/image/config.ico"));
-    connect(mChnConfig, SIGNAL(triggered()), this, SLOT(chnConfigSlot()));
+    mChnCfg = new QAction(tr("通道配置 "), this);
+    mChnCfg->setIcon(QIcon(":/image/ipc.ico"));
+    connect(mChnCfg, SIGNAL(triggered()), this, SLOT(chnCfgSlot()));
 
-    mNetConfig = new QAction(tr("网络配置 "), this);
-    mNetConfig->setIcon(QIcon(":/image/network.ico"));
-    connect(mNetConfig, SIGNAL(triggered()), this, SLOT(netConfigSlot()));
+    mLayoutCfg = new QAction(tr("layout配置 "), this);
+    mLayoutCfg->setIcon(QIcon(":/image/layout.ico"));
+    connect(mLayoutCfg, SIGNAL(triggered()), this, SLOT(layoutCfgSlot()));
 
-    mAbout = new QAction(tr("  关    于 "), this);
+    mDispmodeCfg = new QAction(tr("display mode配置 "), this);
+    mDispmodeCfg->setIcon(QIcon(":/image/dispmode.ico"));
+    connect(mDispmodeCfg, SIGNAL(triggered()), this, SLOT(dispmodeCfgSlot()));
+
+    mNetCfg = new QAction(tr("网络配置 "), this);
+    mNetCfg->setIcon(QIcon(":/image/network.ico"));
+    connect(mNetCfg, SIGNAL(triggered()), this, SLOT(netCfgSlot()));
+
+    mAbout = new QAction(tr("关    于"), this);
     mAbout->setIcon(QIcon(":/image/about.ico"));
     connect(mAbout, SIGNAL(triggered()), this, SLOT(aboutSlot()));
 
-    mExit = new QAction(tr("  关    机 "), this);
+    mExit = new QAction(tr("关    机"), this);
     mExit->setIcon(QIcon(":/image/exit.ico"));
     connect(mExit, SIGNAL(triggered()), this, SLOT(exitSlot()));
 
     int i;
-    mSceneNum = 0;
-    mSceneGroup = new QActionGroup(this);        //创建菜单项组，里面的菜单项为互斥
-    for (i=0; i<IDS_LAYOUT_MAX_NUM; i++)
-        mSceneList[i] = NULL;
-
     mWinNum = 0;
     for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
     {
@@ -68,22 +94,24 @@ idsServer::idsServer(QWidget *parent) :
 
     mMainMenu->addSeparator();
     mMainMenu->addSeparator();
-
-    mMainMenu->addAction(mChnConfig);               //把action项放入主菜单中
+    mMainMenu->addAction(mChnCfg);               //把action项放入主菜单中
     mMainMenu->addSeparator();
     mMainMenu->addSeparator();
-    mMainMenu->addAction(mNetConfig);               //把action项放入主菜单中
+    mMainMenu->addAction(mLayoutCfg);               //把action项放入主菜单中
+    mMainMenu->addSeparator();
+    mMainMenu->addSeparator();
+    mMainMenu->addAction(mDispmodeCfg);         //把action项放入主菜单中
+    mMainMenu->addSeparator();
+    mMainMenu->addSeparator();
+    mMainMenu->addAction(mNetCfg);               //把action项放入主菜单中
     mMainMenu->addSeparator();
     mMainMenu->addSeparator();
     mMainMenu->addAction(mAbout);                   //把about项放入主菜单中
     mMainMenu->addSeparator();
     mMainMenu->addSeparator();
-
     mMainMenu->addAction(mExit);
     mMainMenu->addSeparator();
     mMainMenu->addSeparator();
-
-    mDispModePreviewFlag = FALSE;
 
     if (TRUE != ids_core_init())
         throw QString("init core library failed");
@@ -92,27 +120,40 @@ idsServer::idsServer(QWidget *parent) :
     if (TRUE != ids_cmd_app_amp_init())
         throw QString("init app amp library failed");
 
-    //mIdsEndpoint = ids_create_remote_endpoint("192.168.1.57", 1702, ids_io_fin_cb, this, NULL);
     mIdsEndpoint = ids_create_local_endpoint();
     if (NULL == mIdsEndpoint)
         throw QString("ids_create_remote_endpoint failed");
 
-    cfg_id = register_event_listener("ids-server", IDS_EVENT_DIS_CFG_MODE,
-                                     NULL, dis_cfg_mode_event_handle, this);
+    register_event_listener("ids-server", IDS_EVENT_DIS_CFG_MODE,
+                                     NULL, disp_mode_cfg_event_handle, this);
+
+    mDispmodePreviewFlag = FALSE;
+
+    mSceneNum = 0;
+    mSceneGroup = new QActionGroup(this);        //创建菜单项组，里面的菜单项为互斥
+    for (i=0; i<IDS_LAYOUT_MAX_NUM; i++)
+        mSceneList[i] = NULL;
+
+    connect(this, SIGNAL(idsPlayerStart()), this, SLOT(idsPlayerStartSlot()));
+    connect(this, SIGNAL(idsPlayerStop()), this, SLOT(idsPlayerStopSlot()));
+
+    getSceneList();
+    mSceneId = 0;                                                       //default play 0
+    QTimer::singleShot(100, this, SLOT(idsPlayerStartSlot()));
 }
 
 idsServer::~idsServer()
 {
+    idsPlayerStopSlot();
     ids_destroy_local_endpoint(mIdsEndpoint);
-
     delete ui;
 }
 
 void idsServer::paintEvent(QPaintEvent*)
 {
-    if (TRUE == mDispModePreviewFlag)
+    if (TRUE == mDispmodePreviewFlag)
     {
-        mDispModePreviewFlag = FALSE;
+        mDispmodePreviewFlag = FALSE;
 
         QPainter painter(this);
         QFont font = QApplication::font();
@@ -123,51 +164,31 @@ void idsServer::paintEvent(QPaintEvent*)
         QString text;
         int i;
 
-        for (i=0; i<mDispModePreview.monitor_nums; i++)
+        for (i=0; i<mDispmodePreview.monitor_nums; i++)
         {
-            rect = QRect(mDispModePreview.monitor_mode_infos[i].pos_x+10,
-                         mDispModePreview.monitor_mode_infos[i].pos_y+10,
-                         mDispModePreview.monitor_mode_infos[i].monitor_res_info.w-20,
-                         mDispModePreview.monitor_mode_infos[i].monitor_res_info.h-20);
-            text = mDispModePreview.monitor_mode_infos[i].name + QString().sprintf("\n(%d*%d)",
-                        mDispModePreview.monitor_mode_infos[i].monitor_res_info.w,
-                        mDispModePreview.monitor_mode_infos[i].monitor_res_info.h);
+            rect = QRect(mDispmodePreview.monitor_mode_infos[i].pos_x+10,
+                         mDispmodePreview.monitor_mode_infos[i].pos_y+10,
+                         mDispmodePreview.monitor_mode_infos[i].monitor_res_info.w-20,
+                         mDispmodePreview.monitor_mode_infos[i].monitor_res_info.h-20);
+            text = mDispmodePreview.monitor_mode_infos[i].name + QString().sprintf("\n(%d*%d)",
+                        mDispmodePreview.monitor_mode_infos[i].monitor_res_info.w,
+                        mDispmodePreview.monitor_mode_infos[i].monitor_res_info.h);
 
             painter.drawText(rect, Qt::AlignCenter, text);
             painter.drawRect(rect);
         }
     }
-}
-
-void layout_get_callback(gpointer buf, gint buf_size, gpointer priv)
-{
-    IdsLayoutAll*layout_all = (IdsLayoutAll *)buf;
-    if (sizeof(IdsLayoutAll) != buf_size)
-    {
-        if (buf_size == sizeof(IdsResponse))
-            qDebug() << "layout_get_callback timeout(if ret == 1-). ret = " << ((IdsResponse*)buf)->ret;
-    }
     else
-        ((idsServer *)priv)->mLayoutAll = *layout_all;
-}
-void ipc_cfg_get_callback(gpointer buf, gint buf_size, gpointer priv)
-{
-    IpcCfgAll *ipc_cfg_all = (IpcCfgAll *)buf;
-    if (sizeof(IpcCfgAll) != buf_size)
     {
-        if (buf_size == sizeof(IdsResponse))
-            qDebug() << "ipc_cfg_get_callback timeout(if ret == -1). ret = " << ((IdsResponse*)buf)->ret;
     }
-    else
-        ((idsServer *)priv)->mIpcCfgAll = *ipc_cfg_all;
 }
 
 void idsServer::getSceneList(void)
 {
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_LAYOUT, -1,
-                           NULL, 0, layout_get_callback, (void*)this, 1);
+                           NULL, 0, layout_get_cb, (void*)this, 1);
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_IPC_CFG, -1,
-                           NULL, 0, ipc_cfg_get_callback, (void*)this, 1);
+                           NULL, 0, ipc_cfg_get_cb, (void*)this, 1);
     gint i;
 
     if (mSceneNum > 0)
@@ -192,34 +213,19 @@ void idsServer::getSceneList(void)
             mSceneSwitchMenu->addAction(mSceneList[i]);                             //把action项放入子菜单中
         }
     }
-    //Scene1->setChecked(true);          //设置默认的菜单组的菜单项状态，firstChannel被选中
 }
 
-void idsServer::sceneStopPlay(void)
+void idsServer::idsPlayerStartSlot(void)
 {
-    int i;
+    if (mSceneId < 0 || mSceneId >= mSceneNum)
+        return;
 
-    for (i=0; i<mWinNum; i++)
-    {
-        if (mPlayerList[i] != NULL)
-            ids_stop_stream(mPlayerList[i]);
-        if (mWidgetList[i] != NULL)
-            delete mWidgetList[i];
-    }
-    mWinNum = 0;
-}
-
-void idsServer::sceneSwitchSlot(void)
-{
-    sceneStopPlay();
-
-    int id = mSceneGroup->checkedAction()->whatsThis().toInt();
     int winW = this->width();
     int winH = this->height();
     int i, j, ret;
 
     for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
-        if (mLayoutAll.layout[id].win[i].w <= 0)
+        if (mLayoutAll.layout[mSceneId].win[i].w <= 0)
             break;
     mWinNum = i;
 
@@ -230,14 +236,14 @@ void idsServer::sceneSwitchSlot(void)
         mPlayerList[i] = NULL;
         mWidgetList[i] = new QWidget(this);
         mWidgetList[i]->setAutoFillBackground(true);
-        mWidgetList[i]->setGeometry(winW * mLayoutAll.layout[id].win[i].x / IDS_LAYOUT_WIN_W
-                                  , winH * mLayoutAll.layout[id].win[i].y / IDS_LAYOUT_WIN_H
-                                  , winW * mLayoutAll.layout[id].win[i].w / IDS_LAYOUT_WIN_W
-                                  , winH * mLayoutAll.layout[id].win[i].h / IDS_LAYOUT_WIN_H);
+        mWidgetList[i]->setGeometry(winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W
+                                  , winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H
+                                  , winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W
+                                  , winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
         mWidgetList[i]->show();
 
         // vid--------0:stitch.    1:linkage.     2~5:g0~g3.      6~69:d0~d63
-        if (mLayoutAll.layout[id].win[i].vid == 0) // stitch
+        if (mLayoutAll.layout[mSceneId].win[i].vid == 0) // stitch
         {
             for (j=0; j<IPC_CFG_STITCH_CNT; j++)
             {
@@ -253,15 +259,15 @@ void idsServer::sceneSwitchSlot(void)
             {
                 ret = ids_play_stream(&winfo[0], j, IDS_TYPE(IDS_TYPE_STITCH), NULL, this, &mPlayerList[i]);
                 if (ret == 0)
-                   qDebug() << "ids_play_stream failed. stitch. vid: " << mLayoutAll.layout[id].win[i].vid;
+                   qDebug() << "ids_play_stream failed. stitch. vid: " << mLayoutAll.layout[mSceneId].win[i].vid;
             }
         }
-        else if (mLayoutAll.layout[id].win[i].vid == 1)
+        else if (mLayoutAll.layout[mSceneId].win[i].vid == 1)
         {
         }
-        else if (mLayoutAll.layout[id].win[i].vid < 2+IPC_CFG_STITCH_CNT)
+        else if (mLayoutAll.layout[mSceneId].win[i].vid < 2+IPC_CFG_STITCH_CNT)
         {
-            j = mLayoutAll.layout[id].win[i].vid-2;
+            j = mLayoutAll.layout[mSceneId].win[i].vid-2;
             if (mIpcCfgAll.ipc_sti[j].url[0])
             {
                 winfo[0].media_url = mIpcCfgAll.ipc_sti[j].url;
@@ -271,12 +277,12 @@ void idsServer::sceneSwitchSlot(void)
                 winfo[0].flags = 0;
                 ret = ids_play_stream(&winfo[0], 1, 0, NULL, this, &mPlayerList[i]);
                 if (ret == 0)
-                   qDebug() << "ids_play_stream failed. vid: " << mLayoutAll.layout[id].win[i].vid;
+                   qDebug() << "ids_play_stream failed. vid: " << mLayoutAll.layout[mSceneId].win[i].vid;
             }
         }
-        else if (mLayoutAll.layout[id].win[i].vid < 2+IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT)
+        else if (mLayoutAll.layout[mSceneId].win[i].vid < 2+IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT)
         {
-            j = mLayoutAll.layout[id].win[i].vid-2-IPC_CFG_STITCH_CNT;
+            j = mLayoutAll.layout[mSceneId].win[i].vid-2-IPC_CFG_STITCH_CNT;
             if (mIpcCfgAll.ipc[j].url[0])
             {
                 winfo[0].media_url = mIpcCfgAll.ipc[j].url;
@@ -286,36 +292,71 @@ void idsServer::sceneSwitchSlot(void)
                 winfo[0].flags = 0;
                 ret = ids_play_stream(&winfo[0], 1, 0, NULL, this, &mPlayerList[i]);
                 if (ret == 0)
-                   qDebug() << "ids_play_stream failed. vid: " << mLayoutAll.layout[id].win[i].vid;
+                   qDebug() << "ids_play_stream failed. vid: " << mLayoutAll.layout[mSceneId].win[i].vid;
             }
         }
     }
 }
 
-void idsServer::chnConfigSlot(void)
+void idsServer::idsPlayerStopSlot(void)
+{
+    int i;
+
+    for (i=0; i<mWinNum; i++)
+    {
+        if (mPlayerList[i] != NULL)
+            ids_stop_stream(mPlayerList[i]);
+        if (mWidgetList[i] != NULL)
+        {
+            mWidgetList[i]->close();
+            delete mWidgetList[i];
+        }
+    }
+    mWinNum = 0;
+}
+
+void idsServer::sceneSwitchSlot(void)
+{
+    idsPlayerStopSlot();
+    repaint();
+    mSceneId = mSceneGroup->checkedAction()->whatsThis().toInt();
+    idsPlayerStartSlot();
+}
+
+void idsServer::chnCfgSlot(void)
+{
+}
+
+void idsServer::layoutCfgSlot(void)
+{
+    idsPlayerStartSlot();
+}
+
+void idsServer::dispmodeCfgSlot(void)
 {
     displayCfgDialog dispCfg;
     dispCfg.mIdsServerWin = this;
     dispCfg.getInfo(mIdsEndpoint);
-    dispCfg.setGeometry(0, 0, 600, 400);
-    dispCfg.show();
+    dispCfg.setGeometry(200, 200, 600, 400);
     dispCfg.exec();
 }
 
-void idsServer::netConfigSlot(void)
+void idsServer::netCfgSlot(void)
 {
     NetCfgDialog netCfg;
     netCfg.update(mIdsEndpoint);
+    netCfg.setGeometry(200, 200, 200, 200);
     netCfg.exec();
 }
 
 void idsServer::aboutSlot(void)
 {
-    QMessageBox::about(this, tr("关于"), tr("中心校准客户端V1.0   "));
+    QMessageBox::about(this, tr("关于"), tr("ids_server"));
 }
 
 void idsServer::exitSlot(void)
 {
+    idsPlayerStopSlot();
     QMessageBox *msgBox = new QMessageBox(QMessageBox::Warning
                                           , tr("警告")
                                           , tr("是否确认关机?")
@@ -330,12 +371,6 @@ void idsServer::exitSlot(void)
 
 void idsServer::contextMenuEvent(QContextMenuEvent *e)
 {
-    static int flag = 0;
-    if (flag == 1)
-        return;
-
-    flag = 1;
-    this->getSceneList();
+    getSceneList();
     mMainMenu->exec(e->globalPos());                    //选择菜单弹出的位置
-    flag = 0;
 }

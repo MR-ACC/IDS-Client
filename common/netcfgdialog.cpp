@@ -8,7 +8,6 @@ NetCfgDialog::NetCfgDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    setWindowFlags(Qt::FramelessWindowHint |Qt::WindowStaysOnTopHint);
     layout()->setSizeConstraint(QLayout::SetFixedSize);
 
     connect(ui->NetCfgbuttonBox, SIGNAL(accepted()), this, SLOT(netcfgAccept()));

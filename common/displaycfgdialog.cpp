@@ -169,10 +169,30 @@ void displayCfgDialog::getInfo(gpointer endpoint)
     ui->listWidget_monitor->clear();
     for (i=0; i<mMonitorInfos.monitor_nums; i++)
         ui->listWidget_monitor->addItem(QString(mMonitorInfos.monitor_infos[i].name));
+
+    int start = 1;
+    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_PREVIEW_DISPLAY_MODE,
+                           -1, &start, sizeof(start), set_preview_display_mode_cb, this, 3);
+    if (mDispModeRet != MSG_EXECUTE_OK)
+    {
+        QString text;
+        text.sprintf("display mode preview error. code: %d", mDispModeRet);
+        QMessageBox::critical(NULL, "tips", text, QMessageBox::Yes, NULL);
+    }
 }
 
 displayCfgDialog::~displayCfgDialog()
 {
+    int end = 0;
+    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_PREVIEW_DISPLAY_MODE,
+                           -1, &end, sizeof(end), set_preview_display_mode_cb, this, 3);
+    if (mDispModeRet != MSG_EXECUTE_OK)
+    {
+        QString text;
+        text.sprintf("display mode preview error. code: %d", mDispModeRet);
+        QMessageBox::critical(NULL, "tips", text, QMessageBox::Yes, NULL);
+    }
+
     delete ui;
 }
 
@@ -289,20 +309,6 @@ void displayCfgDialog::mousePressEvent(QMouseEvent *e)
 
 void displayCfgDialog::closeEvent(QCloseEvent *event)
 {
-
-}
-
-void displayCfgDialog::on_pushButton_preview_clicked()
-{
-    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_PREVIEW_DISPLAY_MODE,
-                           -1, NULL, 0, set_preview_display_mode_cb, this, 3);
-
-    if (mDispModeRet != MSG_EXECUTE_OK)
-    {
-        QString text;
-        text.sprintf("display mode preview error. code: %d", mDispModeRet);
-        QMessageBox::critical(NULL, "tips", text, QMessageBox::Yes, NULL);
-    }
 }
 
 void displayCfgDialog::accept()

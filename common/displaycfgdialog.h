@@ -37,8 +37,6 @@ private slots:
     void reject();
     void modeResChanged();
 
-    void on_pushButton_preview_clicked();
-
 private:
 
     int mModeCnt, mResCnt;

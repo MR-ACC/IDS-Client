@@ -1,2 +1,12 @@
-<RCC/>
-
+<RCC>
+    <qresource prefix="/">
+        <file>image/about.ico</file>
+        <file>image/config.ico</file>
+        <file>image/exit.ico</file>
+        <file>image/network.ico</file>
+        <file>image/dispmode.ico</file>
+        <file>image/ipc.ico</file>
+        <file>image/layout.ico</file>
+        <file>image/scene.ico</file>
+    </qresource>
+</RCC>
