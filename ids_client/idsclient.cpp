@@ -9,10 +9,12 @@
 void ids_io_fin_cb(gpointer priv)
 {
     ((idsclient*)priv)->mIdsEndpoint = ids_create_remote_endpoint(((idsclient*)priv)->mIp, SERVER_PORT, ids_io_fin_cb, priv, NULL);
+    qDebug() << "sdflksjdfsssssssssssssss";
     if (NULL == ((idsclient*)priv)->mIdsEndpoint)
     {
         QMessageBox::information(NULL, "tips", QString().sprintf("connect to server(%s) failed.", ((idsclient*)priv)->mIp), QMessageBox::Yes, NULL);
     }
+    //QMessageBox::information(NULL, "tips", QString().sprintf("reconnect to server(%s) successed.", ((idsclient*)priv)->mIp), QMessageBox::Yes, NULL);
 }
 
 idsclient::idsclient(QWidget *parent) :
@@ -51,13 +53,17 @@ void idsclient::on_pushButton_connect_clicked()
 
 void idsclient::on_pushButton_netcfg_clicked()
 {
+    NetCfgDialog netCfg;
+
     if (mIdsEndpoint == NULL)
     {
         QMessageBox::information(NULL, "tips", "please connect first.", QMessageBox::Yes, NULL);
         return ;
     }
 
-    ///rongpeng
+    netCfg.update(mIdsEndpoint);
+    netCfg.exec();
+    strcpy(mIp, netCfg.mNetInfo.ip);
 }
 
 void idsclient::on_pushButton_dispcfg_clicked()
@@ -70,7 +76,6 @@ void idsclient::on_pushButton_dispcfg_clicked()
     displayCfgDialog dispCfg;
     dispCfg.mIdsServerWin = this;
     dispCfg.getInfo(mIdsEndpoint);
-    dispCfg.setGeometry(0, 0, 600, 400);
     dispCfg.show();
     dispCfg.exec();
 }

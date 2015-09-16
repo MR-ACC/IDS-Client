@@ -2,6 +2,7 @@
 #define NETCFGDIALOG_H
 
 #include <QDialog>
+#include "ids.h"
 
 namespace Ui {
 class NetCfgDialog;
@@ -14,11 +15,11 @@ class NetCfgDialog : public QDialog
 public:
     explicit NetCfgDialog(QWidget *parent = 0);
     ~NetCfgDialog();
-    void update();
+    void update(gpointer  endpoint);
+    NetInfo mNetInfo;
 private:
-    QString netname;
     Ui::NetCfgDialog *ui;
-
+    gpointer mIdsEndpoint;
 private slots:
     void netcfgAccept();
     void netcfgReject();

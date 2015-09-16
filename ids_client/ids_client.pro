@@ -30,4 +30,4 @@ ROOT_LIB_DIR = $$ROOT_DIR/lib
 ROOT_INC_DIR = $$ROOT_DIR/inc
 
 INCLUDEPATH += $$ROOT_INC_DIR $$ROOT_INC_DIR/glib-2.0 $$ROOT_LIB_DIR/glib-2.0/include
-LIBS += -L $$ROOT_LIB_DIR -lids_fw -lmodules_app_ex -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR
+LIBS += -L $$ROOT_LIB_DIR -lids_fw  -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR

@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include "ids.h"
+#include "../common/displaycfgdialog.h"
+#include "../common/netcfgdialog.h"
 
 namespace Ui {
 class idsclient;

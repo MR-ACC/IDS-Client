@@ -3,6 +3,7 @@
 
 void ids_io_fin_cb(gpointer priv)
 {
+    //((idsServer*)priv)->mIdsEndpoint = ids_create_remote_endpoint("192.168.1.56", 1702, ids_io_fin_cb, priv, NULL);
     ((idsServer*)priv)->mIdsEndpoint = ids_create_remote_endpoint("192.168.1.56", 1702, ids_io_fin_cb, priv, NULL);
     if (NULL == ((idsServer*)priv)->mIdsEndpoint)
         throw QString("ids_io_fin_cb. ids_create_remote_endpoint failed");
@@ -84,7 +85,6 @@ idsServer::idsServer(QWidget *parent) :
 
     mDispModePreviewFlag = FALSE;
 
-    gint ret;
     if (TRUE != ids_core_init())
         throw QString("init core library failed");
     if (TRUE != ids_modules_init())
@@ -92,7 +92,7 @@ idsServer::idsServer(QWidget *parent) :
     if (TRUE != ids_cmd_app_amp_init())
         throw QString("init app amp library failed");
 
-//    mIdsEndpoint = ids_create_remote_endpoint("192.168.1.56", 1702, ids_io_fin_cb, this, NULL);
+    //mIdsEndpoint = ids_create_remote_endpoint("192.168.1.57", 1702, ids_io_fin_cb, this, NULL);
     mIdsEndpoint = ids_create_local_endpoint();
     if (NULL == mIdsEndpoint)
         throw QString("ids_create_remote_endpoint failed");
@@ -305,7 +305,7 @@ void idsServer::chnConfigSlot(void)
 void idsServer::netConfigSlot(void)
 {
     NetCfgDialog netCfg;
-    netCfg.update();
+    netCfg.update(mIdsEndpoint);
     netCfg.exec();
 }
 

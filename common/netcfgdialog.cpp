@@ -1,7 +1,6 @@
 #include "netcfgdialog.h"
 #include "ui_netcfgdialog.h"
 #include <QDebug>
-#include <QtNetwork/QNetworkInterface>
 
 NetCfgDialog::NetCfgDialog(QWidget *parent) :
     QDialog(parent),
@@ -21,26 +20,51 @@ NetCfgDialog::~NetCfgDialog()
     delete ui;
 }
 
+void msg_callback_dummy(gpointer buf, gint buf_size, gpointer priv)
+{
+    if (buf_size == sizeof(IdsResponse)) {
+        IdsResponse *pres = (IdsResponse *)buf;
+        if (pres->magic == IDS_RESPONSE_MAGIC) {
+            return ;
+        }
+    }
+}
+
 void NetCfgDialog::netcfgAccept()
 {
     QString ip = ui->IPCfglineEdit->text();
     QString ma = ui->MaskCfglineEdit->text();
     QString ga = ui->GateCfglineEdit->text();
-    QString cmd = "modify_net eth "+netname;
-    qDebug() << "accept netname:" << netname;
 
-    if (ip != "")
-        cmd += " ip "+ip;
+    if (mNetInfo.flag & IFACE_OK) {
+        mNetInfo.flag = IFACE_OK;
+        if (ip != "") {
+            strcpy(mNetInfo.ip, (const char*) ip.toLocal8Bit());
+            mNetInfo.flag |= IP_OK;
+        }
 
-    if (ma != "")
-        cmd += " netmask "+ma;
+        if (ma != "") {
+            strcpy(mNetInfo.mask, (const char*) ma.toLocal8Bit());
+            mNetInfo.flag |= MASK_OK;
+        }
 
-    if (ga != "")
-        cmd += " gw "+ga;
+        if (ga != "" ) {
+            strcpy(mNetInfo.gw, (const char*) ga.toLocal8Bit());
+            mNetInfo.flag |= GW_OK;
+        }
 
-    qDebug() << cmd;
-
-    system(cmd.toLocal8Bit().constData());
+        if (mNetInfo.flag != IFACE_OK) {
+            ids_net_write_msg_sync(mIdsEndpoint
+                        , IDS_CMD_SET_NETWORK_INFO
+                        , -1
+                        , &mNetInfo
+                        , sizeof(mNetInfo)
+                        , msg_callback_dummy
+                        , NULL
+                        , 1);
+            return ;
+        }
+    }
 }
 
 void NetCfgDialog::netcfgReject()
@@ -48,35 +72,41 @@ void NetCfgDialog::netcfgReject()
 
 }
 
-void NetCfgDialog::update()
+void get_netinfo_cb(gpointer buf, gint buf_size, gpointer priv)
 {
-    QString ip, mask;
-    QList<QNetworkInterface> list = QNetworkInterface::allInterfaces();
-    //获取所有网络接口的列表
-    foreach(QNetworkInterface interface,list)
-    {  //遍历每一个网络接口
-        qDebug() << "Device: "<<interface.name();
-        if (interface.name() == "lo")
-            continue;
-        //设备名
-        qDebug() << "HardwareAddress: "<<interface.hardwareAddress();
-        //硬件地址
-        QList<QNetworkAddressEntry> entryList = interface.addressEntries();
-     //获取IP地址条目列表，每个条目中包含一个IP地址，一个子网掩码和一个广播地址
-        netname = interface.name();
-        qDebug() << "netname:" << netname;
-        foreach(QNetworkAddressEntry entry,entryList)
-        {//遍历每一个IP地址条目
-            qDebug()<<"IP Address: "<<entry.ip().toString();
-            qDebug() << "get valid iface:" << interface.name();
-            ip = entry.ip().toString();
-            mask = entry.netmask().toString();
-            break;
+    NetInfo *pninfo = (NetInfo *)buf;
+    NetCfgDialog *pcfgDialog = (NetCfgDialog *)priv;
+
+    if (buf_size == sizeof(IdsResponse)) {
+        IdsResponse *pres = (IdsResponse *)buf;
+        if (pres->magic == IDS_RESPONSE_MAGIC) {
+            pcfgDialog->mNetInfo.flag = 0;
+            return ;
         }
     }
 
-    qDebug() << "get ip:" << ip << "get mask:" << mask;
+    pcfgDialog->mNetInfo = *pninfo;
+}
 
-    ui->IPCfglineEdit->setText(ip);
-    ui->MaskCfglineEdit->setText(mask);
+void NetCfgDialog::update(gpointer  endpoint)
+{
+    ids_net_write_msg_sync(endpoint
+                    , IDS_CMD_GET_NETWORK_INFO
+                    , -1
+                    , NULL
+                    , 0
+                    , get_netinfo_cb
+                    , this
+                    , 1);
+
+    if (mNetInfo.flag &IP_OK )
+        ui->IPCfglineEdit->setText(mNetInfo.ip);
+
+    if (mNetInfo.flag &MASK_OK)
+        ui->MaskCfglineEdit->setText(mNetInfo.mask);
+
+    if (mNetInfo.flag &GW_OK)
+        ui->GateCfglineEdit->setText(mNetInfo.gw);
+
+    mIdsEndpoint = endpoint;
 }
