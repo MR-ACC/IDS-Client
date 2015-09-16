@@ -116,7 +116,7 @@ void idsServer::paintEvent(QPaintEvent*)
 
         QPainter painter(this);
         QFont font = QApplication::font();
-        font.setPixelSize(20);
+        font.setPixelSize(60);
         painter.setFont(font);
         painter.setPen(Qt::white);
         QRect rect;
@@ -125,10 +125,10 @@ void idsServer::paintEvent(QPaintEvent*)
 
         for (i=0; i<mDispModePreview.monitor_nums; i++)
         {
-            rect = QRect(mDispModePreview.monitor_mode_infos[i].pos_x+1,
-                         mDispModePreview.monitor_mode_infos[i].pos_y+1,
-                         mDispModePreview.monitor_mode_infos[i].monitor_res_info.w-2,
-                         mDispModePreview.monitor_mode_infos[i].monitor_res_info.h-2);
+            rect = QRect(mDispModePreview.monitor_mode_infos[i].pos_x+10,
+                         mDispModePreview.monitor_mode_infos[i].pos_y+10,
+                         mDispModePreview.monitor_mode_infos[i].monitor_res_info.w-20,
+                         mDispModePreview.monitor_mode_infos[i].monitor_res_info.h-20);
             text = mDispModePreview.monitor_mode_infos[i].name + QString().sprintf("\n(%d*%d)",
                         mDispModePreview.monitor_mode_infos[i].monitor_res_info.w,
                         mDispModePreview.monitor_mode_infos[i].monitor_res_info.h);
@@ -217,9 +217,6 @@ void idsServer::sceneSwitchSlot(void)
     int winW = this->width();
     int winH = this->height();
     int i, j, ret;
-
-    if (id == 1) //debug use
-        return;
 
     for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
         if (mLayoutAll.layout[id].win[i].w <= 0)
