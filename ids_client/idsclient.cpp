@@ -76,6 +76,5 @@ void idsclient::on_pushButton_dispcfg_clicked()
     displayCfgDialog dispCfg;
     dispCfg.mIdsServerWin = this;
     dispCfg.getInfo(mIdsEndpoint);
-    dispCfg.show();
     dispCfg.exec();
 }

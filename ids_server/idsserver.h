@@ -29,10 +29,11 @@ public:
     void contextMenuEvent(QContextMenuEvent *);
     ~idsServer();
 
-    gpointer            mIdsEndpoint;
-    IdsLayoutAll        mLayoutAll;
-    IpcCfgAll           mIpcCfgAll;
-    DisplayModeInfo     mDispmodePreview;
+    gpointer                   mIdsEndpoint;
+    IpcCfgAll                  mIpcCfgAll;
+    IdsLayoutAll            mLayoutAll;
+    DisplayModeInfo    mDispmodePreview;
+    bool                          mDispmodePreviewFlag;
 
 signals:
     void idsPlayerStart();
@@ -51,32 +52,34 @@ public slots:
 
 protected:
     void paintEvent(QPaintEvent*);
+    void showEvent(QShowEvent *);
 
 private:
-    static int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv);
-    void getSceneList(void);
-    int cfg_id;
+    void newSceneList(void);
+    void deleteSceneList(void);
 
-    Ui::idsServer *ui;
-    QMenu              *mMainMenu;                      /*popupMenu*/  //主菜单
-    QMenu              *mSceneSwitchMenu;               /*switchScene*/  // 二级菜单
-    QAction             *mChnCfg;                                  /*Cfg*/
-    QAction             *mLayoutCfg;                             /*Cfg*/
-    QAction             *mDispmodeCfg;                       /*Cfg*/
-    QAction             *mNetCfg;                                  /*net*/
-    QAction             *mAbout;                                        /*about*/
+    Ui::idsServer     *ui;
+    QMenu              *mMainMenu;                          //主菜单
+    QMenu              *mSceneSwitchMenu;             //二级菜单
+    QAction             *mChnCfg;
+    QAction             *mLayoutCfg;
+    QAction             *mDispmodeCfg;
+    QAction             *mNetCfg;
+    QAction             *mAbout;
     QAction             *mExit;
 
-    int                      mSceneId;
-    int                      mSceneNum;
     QActionGroup  *mSceneGroup;                    //用来实现子菜单选项互斥
     QAction             *mSceneList[IDS_LAYOUT_MAX_NUM];
+    int                       mSceneNum;
+    int                       mSceneId;
 
-    int                      mWinNum;
+    int                       mWinNum;
+    int                       mWinIdStitch, mWinIdLink;
     IdsPlayer           *mPlayerList[IDS_LAYOUT_WIN_MAX_NUM];
     QWidget            *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
+    char                    mPlayerStatus[IDS_LAYOUT_WIN_MAX_NUM][256];
 
-    bool                    mDispmodePreviewFlag;
+    QMutex              mMutex;
 };
 
 #endif // IDSSERVER_H

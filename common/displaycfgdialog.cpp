@@ -3,6 +3,10 @@
 #include <QtGui>
 #include <QMessageBox>
 
+#define MAX_MODE_NUMBERS 20
+const int mode_v_cnt[MAX_MODE_NUMBERS] = {1, 1, 1, 1, 2, 2, 2, 0};
+const int mode_h_cnt[MAX_MODE_NUMBERS] = {1, 2, 3, 4, 2, 3, 4, 0};
+
 #define IDS_MSG_CHECK_GET_RESPONSE \
     do { \
         if (buf_size == sizeof(IdsResponse)) { \
@@ -48,9 +52,10 @@ displayCfgDialog::displayCfgDialog(QWidget *parent) :
     connect(ui->listWidget_res, SIGNAL(itemSelectionChanged()), this, SLOT(modeResChanged()));
 }
 
-void displayCfgDialog::getInfo(gpointer endpoint)
+void displayCfgDialog::update(gpointer endpoint)
 {
     //get now mDispMode
+#if 0
     mDispMode.monitor_nums = 4;
     strcpy(mDispMode.monitor_mode_infos[0].name, "vir 0");
     mDispMode.monitor_mode_infos[0].pos_x = 0;
@@ -115,6 +120,7 @@ void displayCfgDialog::getInfo(gpointer endpoint)
     mMonitorInfos.monitor_infos[5].monitor_res_infos[2] = res2;
     mMonitorInfos.monitor_infos[5].monitor_res_infos[3] = res3;
     mMonitorInfos.monitor_infos[5].monitor_res_infos[4] = res_null;
+#endif
 
     mIdsEndpoint = endpoint;
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_MONITOR_INFOS,
@@ -177,7 +183,7 @@ void displayCfgDialog::getInfo(gpointer endpoint)
     {
         QString text;
         text.sprintf("display mode preview error. code: %d", mDispModeRet);
-        QMessageBox::critical(NULL, "tips", text, QMessageBox::Yes, NULL);
+        QMessageBox::critical(this, "tips", text, QMessageBox::Yes, NULL);
     }
 }
 
@@ -190,7 +196,7 @@ displayCfgDialog::~displayCfgDialog()
     {
         QString text;
         text.sprintf("display mode preview error. code: %d", mDispModeRet);
-        QMessageBox::critical(NULL, "tips", text, QMessageBox::Yes, NULL);
+        QMessageBox::critical(this, "tips", text, QMessageBox::Yes, NULL);
     }
 
     delete ui;
@@ -307,10 +313,6 @@ void displayCfgDialog::mousePressEvent(QMouseEvent *e)
     this->repaint();
 }
 
-void displayCfgDialog::closeEvent(QCloseEvent *event)
-{
-}
-
 void displayCfgDialog::accept()
 {
     if (mModeId == -1 || mResId == -1)
@@ -326,7 +328,7 @@ void displayCfgDialog::accept()
         {
             if (mMonitorId[i] == mMonitorId[j])
             {
-                QMessageBox::critical(NULL, "tips", "monitors conflict...", QMessageBox::Yes, NULL);
+                QMessageBox::critical(this, "tips", "monitors conflict...", QMessageBox::Yes, NULL);
                 return;
             }
         }
@@ -345,7 +347,7 @@ void displayCfgDialog::accept()
         {
             QString text;
             text.sprintf("display mode set error. code: %d", mDispModeRet);
-            QMessageBox::information(NULL, "tips", text, QMessageBox::Yes, NULL);
+            QMessageBox::information(this, "tips", text, QMessageBox::Yes, NULL);
         }
     }
 }
@@ -353,6 +355,11 @@ void displayCfgDialog::accept()
 void displayCfgDialog::reject()
 {
     this->close();
+}
+
+void displayCfgDialog::closeEvent(QCloseEvent *event)
+{
+
 }
 
 void displayCfgDialog::modeResChanged()

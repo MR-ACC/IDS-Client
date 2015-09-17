@@ -34,3 +34,6 @@ LIBS += -L $$ROOT_LIB_DIR -lids_fw -lmodules_core  -lmodules_app_ex -Wl,-rpath,$
 
 RESOURCES += \
     image.qrc
+
+DISTFILES += \
+    ../readme.txt
