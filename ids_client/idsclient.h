@@ -3,8 +3,6 @@
 
 #include <QMainWindow>
 #include "ids.h"
-#include "../common/displaycfgdialog.h"
-#include "../common/netcfgdialog.h"
 
 namespace Ui {
 class idsclient;
@@ -26,6 +24,8 @@ private slots:
     void on_pushButton_netcfg_clicked();
     void on_pushButton_dispcfg_clicked();
     void connect_server(int prompt_first);
+
+    void on_pushButton_chncfg_clicked();
 
 signals:
     void connect_network(int);

@@ -1,6 +1,8 @@
 #include "idsclient.h"
 #include "ui_idsclient.h"
 #include "../common/displaycfgdialog.h"
+#include "../common/chncfgdialog.h"
+#include "../common/netcfgdialog.h"
 #include <QDebug>
 #include <QMessageBox>
 
@@ -71,10 +73,10 @@ void idsclient::on_pushButton_connect_clicked()
     connect_server(0);
 }
 
-void idsclient::on_pushButton_netcfg_clicked()
+
+void idsclient::on_pushButton_chncfg_clicked()
 {
-    int ret;
-    NetCfgDialog netCfg;
+    ChnCfgDialog chnCfg;
 
     if (mIdsEndpoint == NULL)
     {
@@ -82,14 +84,11 @@ void idsclient::on_pushButton_netcfg_clicked()
         return ;
     }
 
-    ret = netCfg.update(mIdsEndpoint);
-    if (!ret)
-    {
-        QMessageBox::critical(NULL, "Error", "get network info failed!");
-        return ;
-    }
-
-    netCfg.exec();
+    chnCfg.setGeometry(200, 200, 640, 480);
+    if (chnCfg.update(mIdsEndpoint))
+        chnCfg.exec();
+    else
+        qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", chnCfg.mMsgRet);
 }
 
 void idsclient::on_pushButton_dispcfg_clicked()
@@ -104,4 +103,24 @@ void idsclient::on_pushButton_dispcfg_clicked()
 
     dispCfg.update(mIdsEndpoint);
     dispCfg.exec();
+}
+
+void idsclient::on_pushButton_netcfg_clicked()
+{
+    int ret;
+    NetCfgDialog netCfg;
+
+    if (mIdsEndpoint == NULL)
+    {
+        QMessageBox::information(NULL, "tips", "please connect first.");
+        return ;
+    }
+    ret = netCfg.update(mIdsEndpoint);
+    if (!ret)
+    {
+        QMessageBox::critical(NULL, "Error", "get network info failed!");
+        return ;
+    }
+
+    netCfg.exec();
 }

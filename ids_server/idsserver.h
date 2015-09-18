@@ -11,9 +11,6 @@
 #include <QNetworkInterface>
 #include <QFrame>
 #include <QColorDialog>
-#include "ids.h"
-#include "../common/displaycfgdialog.h"
-#include "../common/netcfgdialog.h"
 #include "app_amp.h"
 
 namespace Ui {

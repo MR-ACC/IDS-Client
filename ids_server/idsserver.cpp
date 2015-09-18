@@ -1,7 +1,10 @@
 #include "idsserver.h"
 #include "ui_idsserver.h"
+#include "../common/displaycfgdialog.h"
+#include "../common/netcfgdialog.h"
+#include "../common/chncfgdialog.h"
 
-int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
+static int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
 {
     if (pev->info.ptr == NULL)
     {
@@ -17,7 +20,7 @@ int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
     return EHR_ACCEPT;
 }
 
-void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
+static void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
     IdsLayoutAll*layout_all = (IdsLayoutAll *)buf;
     if (sizeof(IdsLayoutAll) != buf_size)
@@ -32,7 +35,7 @@ void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
     }
 }
 
-void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
+static void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
     IpcCfgAll *ipc_cfg_all = (IpcCfgAll *)buf;
     if (sizeof(IpcCfgAll) != buf_size)
@@ -138,7 +141,7 @@ idsServer::idsServer(QWidget *parent) :
     if (NULL == mIdsEndpoint)
         throw QString("ids_create_remote_endpoint failed");
 
-    register_event_listener("ids-server", IDS_EVENT_DIS_CFG_MODE,
+    register_event_listener("ids-server", IDS_EVENT_DISP_MODE_CFG,
                                      NULL, disp_mode_cfg_event_handle, this);
 
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_LAYOUT, -1,
@@ -389,6 +392,13 @@ void idsServer::sceneSwitchSlot(void)
 
 void idsServer::chnCfgSlot(void)
 {
+    ChnCfgDialog chnCfg;
+    chnCfg.setGeometry(200, 200, 640, 480);
+
+    if (chnCfg.update(mIdsEndpoint))
+        chnCfg.exec();
+    else
+        qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", chnCfg.mMsgRet);
 }
 
 void idsServer::layoutCfgSlot(void)
@@ -433,19 +443,19 @@ void idsServer::exitSlot(void)
 
 void idsServer::contextMenuEvent(QContextMenuEvent *e)
 {
-    if (false == mMutex.tryLock())
-        return;
-
-    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_LAYOUT, -1,
-                           NULL, 0, layout_get_cb, (void*)this, 1);
-    if (mMsgRet != MSG_EXECUTE_OK)
-        QMessageBox::critical(this, "error", QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet), QMessageBox::Yes, NULL);
-    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_IPC_CFG, -1,
-                           NULL, 0, ipc_cfg_get_cb, (void*)this, 1);
-    if (mMsgRet != MSG_EXECUTE_OK)
-        QMessageBox::critical(this, "error", QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet), QMessageBox::Yes, NULL);
-    deleteSceneList();
-    newSceneList();
-    mMutex.unlock();
+    if (true == mMutex.tryLock())
+    {
+        ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_LAYOUT, -1,
+                               NULL, 0, layout_get_cb, (void*)this, 1);
+        if (mMsgRet != MSG_EXECUTE_OK)
+            qDebug() << QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet);
+        ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_IPC_CFG, -1,
+                               NULL, 0, ipc_cfg_get_cb, (void*)this, 1);
+        if (mMsgRet != MSG_EXECUTE_OK)
+            qDebug() << QString().sprintf("ids cmd get ipc cfg error. code = %d.", mMsgRet);
+        deleteSceneList();
+        newSceneList();
+        mMutex.unlock();
+    }
     mMainMenu->exec(e->globalPos());                    //选择菜单弹出的位置
 }

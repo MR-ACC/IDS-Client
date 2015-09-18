@@ -18,7 +18,7 @@ const int mode_h_cnt[MAX_MODE_NUMBERS] = {1, 2, 3, 4, 2, 3, 4, 0};
         } \
     }while (0)
 
-void get_monitor_infos_cb(gpointer buf, gint buf_size, gpointer priv)
+static void get_monitor_infos_cb(gpointer buf, gint buf_size, gpointer priv)
 {
     IDS_MSG_CHECK_GET_RESPONSE;
 
@@ -26,7 +26,7 @@ void get_monitor_infos_cb(gpointer buf, gint buf_size, gpointer priv)
     ((displayCfgDialog *)priv)->mMonitorInfos = *(MonitorInfos *)buf;
 }
 
-void get_display_mode_cb(gpointer buf, gint buf_size, gpointer priv)
+static void get_display_mode_cb(gpointer buf, gint buf_size, gpointer priv)
 {
     IDS_MSG_CHECK_GET_RESPONSE;
 
@@ -34,7 +34,7 @@ void get_display_mode_cb(gpointer buf, gint buf_size, gpointer priv)
     ((displayCfgDialog *)priv)->mDispMode = *(DisplayModeInfo *)buf;
 }
 
-void set_preview_display_mode_cb(gpointer buf, gint buf_size, gpointer priv)
+static void set_preview_display_mode_cb(gpointer buf, gint buf_size, gpointer priv)
 {
     Q_ASSERT(buf_size == sizeof(IdsResponse));
     IdsResponse *pres = (IdsResponse *)buf;

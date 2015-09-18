@@ -15,15 +15,18 @@ TEMPLATE = app
 SOURCES += main.cpp\
         idsserver.cpp \
     ../common/displaycfgdialog.cpp \
-    ../common/netcfgdialog.cpp
+    ../common/netcfgdialog.cpp \
+    ../common/chncfgdialog.cpp
 
 HEADERS  += idsserver.h \
     ../common/displaycfgdialog.h \
-    ../common/netcfgdialog.h
+    ../common/netcfgdialog.h \
+    ../common/chncfgdialog.h
 
 FORMS    += idsserver.ui \
     ../common/displaycfgdialog.ui \
-    ../common/netcfgdialog.ui
+    ../common/netcfgdialog.ui \
+    ../common/chncfgdialog.ui
 
 ROOT_DIR = $$system(pwd)/../../
 ROOT_LIB_DIR = $$ROOT_DIR/lib
