@@ -5,16 +5,15 @@ int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
 {
     if (pev->info.ptr == NULL)
     {
+        ((idsServer *)priv)->mDispmodePreviewFlag = FALSE;
         emit ((idsServer *)priv)->idsPlayerStart();
     }
     else
     {
-        emit ((idsServer *)priv)->idsPlayerStop();
         ((idsServer *)priv)->mDispmodePreviewFlag = TRUE;
         ((idsServer *)priv)->mDispmodePreview = *((DisplayModeInfo *)pev->info.ptr);
-        ((idsServer *)priv)->repaint();
+        emit ((idsServer *)priv)->idsPlayerStop();
     }
-
     return EHR_ACCEPT;
 }
 
@@ -24,10 +23,13 @@ void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
     if (sizeof(IdsLayoutAll) != buf_size)
     {
         Q_ASSERT (buf_size == sizeof(IdsResponse));
-        qDebug() << QString().sprintf("layout_cfg_get_cb timeout error. ret = %d", ((IdsResponse*)buf)->ret);
+        ((idsServer *)priv)->mMsgRet = ((IdsResponse*)buf)->ret;
     }
     else
+    {
         ((idsServer *)priv)->mLayoutAll = *layout_all;
+        ((idsServer *)priv)->mMsgRet = MSG_EXECUTE_OK;
+    }
 }
 
 void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
@@ -36,10 +38,13 @@ void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
     if (sizeof(IpcCfgAll) != buf_size)
     {
         Q_ASSERT (buf_size == sizeof(IdsResponse));
-        qDebug() << QString().sprintf("ipc_cfg__get_cb timeout error. ret = %d", ((IdsResponse*)buf)->ret);
+        ((idsServer *)priv)->mMsgRet = ((IdsResponse*)buf)->ret;
     }
     else
+    {
         ((idsServer *)priv)->mIpcCfgAll = *ipc_cfg_all;
+        ((idsServer *)priv)->mMsgRet = MSG_EXECUTE_OK;
+    }
 }
 
 idsServer::idsServer(QWidget *parent) :
@@ -138,8 +143,12 @@ idsServer::idsServer(QWidget *parent) :
 
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_LAYOUT, -1,
                            NULL, 0, layout_get_cb, (void*)this, 1);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        QMessageBox::critical(this, "error", QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet), QMessageBox::Yes, NULL);
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_IPC_CFG, -1,
                            NULL, 0, ipc_cfg_get_cb, (void*)this, 1);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        QMessageBox::critical(this, "error", QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet), QMessageBox::Yes, NULL);
 
     newSceneList();
     mSceneId = 0;                                                       //default play the first scene
@@ -182,7 +191,6 @@ void idsServer::paintEvent(QPaintEvent*)
         painter.setFont(font);
 
         QString text;
-        mDispmodePreviewFlag = FALSE;
 
         for (i=0; i<mDispmodePreview.monitor_nums; i++)
         {
@@ -365,6 +373,7 @@ void idsServer::idsPlayerStopSlot(void)
         }
     }
     mWinNum = 0;
+    this->repaint();
     mMutex.unlock();
 }
 
@@ -372,9 +381,8 @@ void idsServer::sceneSwitchSlot(void)
 {
     if (mSceneId != mSceneGroup->checkedAction()->whatsThis().toInt())
     {
-        idsPlayerStopSlot();
-        repaint();
         mSceneId = mSceneGroup->checkedAction()->whatsThis().toInt();
+        idsPlayerStopSlot();
         idsPlayerStartSlot();
     }
 }
@@ -427,10 +435,15 @@ void idsServer::contextMenuEvent(QContextMenuEvent *e)
 {
     if (false == mMutex.tryLock())
         return;
+
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_LAYOUT, -1,
                            NULL, 0, layout_get_cb, (void*)this, 1);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        QMessageBox::critical(this, "error", QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet), QMessageBox::Yes, NULL);
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_IPC_CFG, -1,
                            NULL, 0, ipc_cfg_get_cb, (void*)this, 1);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        QMessageBox::critical(this, "error", QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet), QMessageBox::Yes, NULL);
     deleteSceneList();
     newSceneList();
     mMutex.unlock();

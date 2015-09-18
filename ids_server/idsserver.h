@@ -30,6 +30,7 @@ public:
     ~idsServer();
 
     gpointer                   mIdsEndpoint;
+    int                             mMsgRet;
     IpcCfgAll                  mIpcCfgAll;
     IdsLayoutAll            mLayoutAll;
     DisplayModeInfo    mDispmodePreview;
