@@ -8,8 +8,11 @@
 
 void ids_io_fin_cb(gpointer priv)
 {
-    ((idsclient*)priv)->mIdsEndpoint = NULL;  //lock mIdsEndpoint before use it???
-    emit ((idsclient*)priv)->connect_network(1);
+    qDebug() << "io fin cb";
+    if (((idsclient*)priv)->mIdsEndpoint) {
+        ((idsclient*)priv)->mIdsEndpoint = NULL;  //lock mIdsEndpoint before use it???
+        emit ((idsclient*)priv)->connect_network(1);
+    }
 }
 
 idsclient::idsclient(QWidget *parent) :
@@ -47,8 +50,11 @@ void idsclient::connect_server(int prompt_first)
             return ;
     }
 
-    if (mIdsEndpoint != NULL)
-        ids_destroy_remote_endpoint(mIdsEndpoint);
+    if (mIdsEndpoint != NULL) {
+        gpointer io =  mIdsEndpoint;
+        mIdsEndpoint = NULL;
+        ids_destroy_remote_endpoint(io);
+    }
 
     mIdsEndpoint = ids_create_remote_endpoint(mIp, SERVER_PORT, ids_io_fin_cb, this, NULL);
     if (NULL == mIdsEndpoint)
@@ -67,6 +73,7 @@ void idsclient::on_pushButton_connect_clicked()
 
 void idsclient::on_pushButton_netcfg_clicked()
 {
+    int ret;
     NetCfgDialog netCfg;
 
     if (mIdsEndpoint == NULL)
@@ -75,7 +82,13 @@ void idsclient::on_pushButton_netcfg_clicked()
         return ;
     }
 
-    netCfg.update(mIdsEndpoint);
+    ret = netCfg.update(mIdsEndpoint);
+    if (!ret)
+    {
+        QMessageBox::critical(NULL, "Error", "get network info failed!");
+        return ;
+    }
+
     netCfg.exec();
 }
 

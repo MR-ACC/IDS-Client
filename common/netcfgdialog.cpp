@@ -1,6 +1,7 @@
 #include "netcfgdialog.h"
 #include "ui_netcfgdialog.h"
 #include <QDebug>
+#include <QMessageBox>
 
 NetCfgDialog::NetCfgDialog(QWidget *parent) :
     QDialog(parent),
@@ -87,7 +88,7 @@ void get_netinfo_cb(gpointer buf, gint buf_size, gpointer priv)
     pcfgDialog->mNetInfo = *pninfo;
 }
 
-void NetCfgDialog::update(gpointer  endpoint)
+int NetCfgDialog::update(gpointer  endpoint)
 {
     ids_net_write_msg_sync(endpoint
                     , IDS_CMD_GET_NETWORK_INFO
@@ -98,14 +99,25 @@ void NetCfgDialog::update(gpointer  endpoint)
                     , this
                     , 1);
 
-    if (mNetInfo.flag &IP_OK )
-        ui->IPCfglineEdit->setText(mNetInfo.ip);
+    if (!mNetInfo.flag)
+    {
+        ui->IPCfglineEdit->setText("");
+        ui->MaskCfglineEdit->setText("");
+        ui->GateCfglineEdit->setText("");
+        return 0;
+    }
+    else
+    {
+        if (mNetInfo.flag &IP_OK )
+            ui->IPCfglineEdit->setText(mNetInfo.ip);
 
-    if (mNetInfo.flag &MASK_OK)
-        ui->MaskCfglineEdit->setText(mNetInfo.mask);
+        if (mNetInfo.flag &MASK_OK)
+            ui->MaskCfglineEdit->setText(mNetInfo.mask);
 
-    if (mNetInfo.flag &GW_OK)
-        ui->GateCfglineEdit->setText(mNetInfo.gw);
+        if (mNetInfo.flag &GW_OK)
+            ui->GateCfglineEdit->setText(mNetInfo.gw);
 
-    mIdsEndpoint = endpoint;
+        mIdsEndpoint = endpoint;
+        return 1;
+    }
 }
