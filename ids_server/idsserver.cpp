@@ -3,6 +3,48 @@
 #include "../common/displaycfgdialog.h"
 #include "../common/netcfgdialog.h"
 #include "../common/chncfgdialog.h"
+#include <QThread>
+
+textWidget::textWidget(QWidget *parent) :
+    QWidget(parent)
+{
+    QPalette palette;
+    palette.setColor(QPalette::Background, QColor(50,50,50));
+    this->setPalette(palette);
+    setAutoFillBackground(true);
+    setAttribute(Qt::WA_TranslucentBackground,false);
+    setWindowFlags(Qt::FramelessWindowHint| Qt::Window | Qt::BypassWindowManagerHint
+                   | Qt::WindowTransparentForInput | Qt::WindowStaysOnBottomHint);
+}
+
+textWidget::~textWidget()
+{
+
+}
+
+void PlayThread::run()
+{
+    emit ((idsServer *)mPriv)->idsPlayerStartOneSlot(mPlayerid);
+    qDebug() << __func__ << __LINE__ << "mPlayerid" << mPlayerid;
+}
+
+void textWidget::paintEvent(QPaintEvent* event)
+{
+    if (mText != "")
+    {
+        QPainter painter(this);
+        QFont font = QApplication::font();
+        font.setPixelSize(20);
+        painter.setFont(font);
+
+        QRect rect;
+        rect = QRect(5, 5, width()-10, height()-10);
+        painter.setPen(QColor(80,80,80));
+        painter.drawRect(rect);
+        painter.setPen(QColor(180,180,180));
+        painter.drawText(rect, Qt::AlignCenter, mText);
+    }
+}
 
 static int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
 {
@@ -55,14 +97,25 @@ idsServer::idsServer(QWidget *parent) :
     ui(new Ui::idsServer)
 {
     ui->setupUi(this);
-
-    this->setWindowState( Qt::WindowFullScreen );
-    this->setAutoFillBackground(true);
+    ui->gridLayout->setMargin(0);
 
     QPalette palette;
     palette.setColor(QPalette::Background, QColor(0,0,0));
     this->setPalette(palette);
-    this->ui->gridLayout->setMargin(0);
+    this->setAutoFillBackground(true);
+
+    setGeometry(0, 0, QApplication::desktop()->width(), QApplication::desktop()->height());
+    setWindowFlags(Qt::FramelessWindowHint);
+    setAttribute(Qt::WA_TranslucentBackground,true);
+
+//    this->setWindowState( Qt::WindowFullScreen );
+//    this->setWindowOpacity(0.3);
+
+    mWidgetBackground = new QWidget(this);
+    mWidgetBackground->setGeometry(0, 0, QApplication::desktop()->width(), QApplication::desktop()->height());
+    mWidgetBackground->setAutoFillBackground(true);
+    mWidgetBackground->setPalette(palette);
+    mWidgetBackground->show();
 
     mChnCfg = new QAction(tr("通道配置 "), this);
     mChnCfg->setIcon(QIcon(":/image/ipc.ico"));
@@ -129,6 +182,7 @@ idsServer::idsServer(QWidget *parent) :
 
     connect(this, SIGNAL(idsPlayerStart()), this, SLOT(idsPlayerStartSlot()));
     connect(this, SIGNAL(idsPlayerStop()), this, SLOT(idsPlayerStopSlot()));
+    connect(this, SIGNAL(idsPlayerStartOne(int)), this, SLOT(idsPlayerStartOneSlot(int)));
 
     if (TRUE != ids_core_init())
         throw QString("ids init core library failed");
@@ -160,10 +214,7 @@ idsServer::idsServer(QWidget *parent) :
 
 idsServer::~idsServer()
 {
-    ids_destroy_local_endpoint(mIdsEndpoint);
-    idsPlayerStopSlot();
-
-    deleteSceneList();
+    delete mWidgetBackground;
     delete mSceneGroup;
 //    delete mSceneSwitchMenu;
     delete mMainMenu;
@@ -176,6 +227,13 @@ idsServer::~idsServer()
     delete ui;
 }
 
+void idsServer::closeEvent(QCloseEvent *)
+{
+    ids_destroy_local_endpoint(mIdsEndpoint);
+    idsPlayerStopSlot();
+    deleteSceneList();
+}
+
 void idsServer::showEvent(QShowEvent *)
 {
 }
@@ -185,6 +243,7 @@ void idsServer::paintEvent(QPaintEvent*)
     QPainter painter(this);
     QFont font = QApplication::font();
     QRect rect;
+    QString text;
     int i;
 
     if (TRUE == mDispmodePreviewFlag)
@@ -193,14 +252,12 @@ void idsServer::paintEvent(QPaintEvent*)
         font.setPixelSize(60);
         painter.setFont(font);
 
-        QString text;
-
         for (i=0; i<mDispmodePreview.monitor_nums; i++)
         {
-            rect = QRect(mDispmodePreview.monitor_mode_infos[i].pos_x+10,
-                         mDispmodePreview.monitor_mode_infos[i].pos_y+10,
-                         mDispmodePreview.monitor_mode_infos[i].monitor_res_info.w-20,
-                         mDispmodePreview.monitor_mode_infos[i].monitor_res_info.h-20);
+            rect = QRect(mDispmodePreview.monitor_mode_infos[i].pos_x+100,
+                         mDispmodePreview.monitor_mode_infos[i].pos_y+100,
+                         mDispmodePreview.monitor_mode_infos[i].monitor_res_info.w-200,
+                         mDispmodePreview.monitor_mode_infos[i].monitor_res_info.h-200);
             text = mDispmodePreview.monitor_mode_infos[i].name + QString().sprintf("\n(%d*%d)",
                         mDispmodePreview.monitor_mode_infos[i].monitor_res_info.w,
                         mDispmodePreview.monitor_mode_infos[i].monitor_res_info.h);
@@ -211,20 +268,26 @@ void idsServer::paintEvent(QPaintEvent*)
     }
     else
     {
-        painter.setPen(Qt::gray);
-        font.setPixelSize(15);
+        painter.setPen(Qt::red);
+        font.setPixelSize(20);
         painter.setFont(font);
+        painter.drawText(QRect(600, 10, 100, 100), Qt::AlignCenter, "Main window is transparent. you can't see me.");
 
-        for (i=0; i<mWinNum; i++)
-        {
-            if (mPlayerStatus[i][0])
-            {
-                rect = mWidgetList[i]->geometry();
-                rect = QRect(rect.x()+10, rect.y()+10, rect.width()-20, rect.height()-20);
-                painter.drawText(rect, Qt::AlignCenter, mPlayerStatus[i]);
-                painter.drawRect(rect);
-            }
-        }
+//        QBitmap bitMap(width(),height()); // A bit map has the same size with current widget
+//        QPainter p(&bitMap);
+//        p.setPen(QColor(255,255,255)); // Any color that is not QRgb(0,0,0) is right
+//        p.drawRect(0,0,width(),height());
+//        // Now begin to draw the place where we want to show it
+//        p.setPen(QColor(0,0,0));
+//        p.drawText(QRect(100, 100, 100, 100), Qt::AlignCenter, "test");
+//        p.fillRect(0,0,width()/2,height()/2, Qt::SolidPattern);
+//        p.fillRect(width()/2,height()/2, width()/2,height()/2, Qt::SolidPattern);
+//        setMask(bitMap);
+
+//        painter.setCompositionMode( QPainter::CompositionMode_Clear);
+//        painter.setPen(QColor(255,0,0));
+//        painter.fillRect( 600, 200, 200, 200, Qt::SolidPattern );
+//        painter.fillRect( 400, 200, 400, 400, QColor(0,255,0,255));
     }
 }
 
@@ -253,6 +316,15 @@ void idsServer::deleteSceneList(void)
     }
     mSceneNum = 0;
 }
+void idsServer::showVideo(bool show)
+{
+    int i;
+    for (i=0; i<mWinNum; i++)
+        if (show == true)
+            mWidgetList[i]->show();
+        else
+            mWidgetList[i]->hide();
+}
 
 void idsServer::idsPlayerStartSlot(void)
 {
@@ -262,102 +334,111 @@ void idsServer::idsPlayerStartSlot(void)
 
     int winW = this->width();
     int winH = this->height();
-    int i, j, ret, vid;
+    int i;
 
     for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
         if (mLayoutAll.layout[mSceneId].win[i].w <= 0)
             break;
     mWinNum = i;
+
     mWinIdStitch = -1;
     mWinIdLink = -1;
 
-    WindowInfo winfo[IPC_CFG_STITCH_CNT];
-
     for (i=0; i<mWinNum; i++)
-    {
+   {
         mPlayerList[i] = NULL;
-        mWidgetList[i] = new QWidget(this);
-        mWidgetList[i]->setAutoFillBackground(true);
-        mWidgetList[i]->setGeometry(winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W
-                                  , winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H
-                                  , winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W
-                                  , winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
+        mWidgetList[i] = new textWidget(this); //textWidget(this)
+        mWidgetList[i]->setGeometry(
+                                  winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W + this->pos().x(),
+                                  winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H + this->pos().y(),
+                                  winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W,
+                                  winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
+        mWidgetList[i]->mText = QString("connecting...");
+        mWidgetList[i]->repaint();
         mWidgetList[i]->show();
 
-        // vid--------0:stitch.    1:linkage.     2~5:g0~g3.      6~69:d0~d63
-        vid = mLayoutAll.layout[mSceneId].win[i].vid;
-        if (vid == 0) // stitch
+        mPlayThread[i].mPriv = (void *)this;
+        mPlayThread[i].mPlayerid = i;
+        mPlayThread[i].start();
+    }
+    mMutex.unlock();
+}
+
+void idsServer::idsPlayerStartOneSlot(int i)
+{
+    qDebug()<<__func__<<__LINE__<<"play: "<<i;
+
+    WindowInfo winfo[IPC_CFG_STITCH_CNT];
+    int j, vid, ret;
+    vid = mLayoutAll.layout[mSceneId].win[i].vid;
+    if (vid == 0) // stitch
+    {
+        mWinIdStitch = i;
+        for (j=0; j<IPC_CFG_STITCH_CNT; j++)
         {
-            mWinIdStitch = i;
-            for (j=0; j<IPC_CFG_STITCH_CNT; j++)
-            {
-                if (0 == mIpcCfgAll.ipc_sti[j].url[0])
-                    break;
-                winfo[j].media_url = mIpcCfgAll.ipc_sti[j].url;
-                winfo[j].win_w = this->mWidgetList[i]->width();
-                winfo[j].win_h = this->mWidgetList[i]->height();
-                winfo[j].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
-                winfo[j].flags = IDS_USE_THE_SAME_WINDOW;
-            }
-            if (j == 0)
-                strcpy(mPlayerStatus[i], "url is null.");
-            else
-            {
-                ret = ids_play_stream(&winfo[0], j, IDS_TYPE(IDS_TYPE_STITCH), NULL, this, &mPlayerList[i]);
-                if (0 != ret)
-                    strcpy(mPlayerStatus[i], "");
-                else
-                {
-                    strcpy(mPlayerStatus[i], "connect failed.");
-                    for (j=0; j<IPC_CFG_STITCH_CNT; j++)
-                    {
-                        if (mIpcCfgAll.ipc_sti[j].url[0] == 0)
-                            break;
-                        strcat(mPlayerStatus[i], "\n");
-                        strcat(mPlayerStatus[i], mIpcCfgAll.ipc_sti[j].url);
-                    }
-                }
-            }
-        } //if (vid == 0) // stitch
-        else if (vid == 1) //link
-        {
-            mWinIdLink = i;
-        } //else if (vid == 1) //link
+            if (0 == mIpcCfgAll.ipc_sti[j].url[0])
+                break;
+            winfo[j].media_url = mIpcCfgAll.ipc_sti[j].url;
+            winfo[j].win_w = this->mWidgetList[i]->width();
+            winfo[j].win_h = this->mWidgetList[i]->height();
+            winfo[j].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
+            winfo[j].flags = IDS_USE_THE_SAME_WINDOW;
+        }
+        if (j == 0)
+            mWidgetList[i]->mText = QString("url is null.");
         else
         {
-            Q_ASSERT(vid < 2+IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT);
-            if (vid < 2+IPC_CFG_STITCH_CNT)
-                winfo[0].media_url = mIpcCfgAll.ipc_sti[vid-2].url;
-            else
-                winfo[0].media_url = mIpcCfgAll.ipc[vid-2-IPC_CFG_STITCH_CNT].url;
-            if (0 == winfo[0].media_url[0])
-                strcpy(mPlayerStatus[i], "url is null.");
+            ret = ids_play_stream(&winfo[0], j, IDS_TYPE(IDS_TYPE_STITCH) | IDS_TYPE(IDS_TYPE_MOUSE_LINKAGE), NULL, this, &mPlayerList[i]);
+            if (0 != ret)
+                mWidgetList[i]->mText = QString("");
             else
             {
-                winfo[0].win_w = this->mWidgetList[i]->width();
-                winfo[0].win_h = this->mWidgetList[i]->height();
-                winfo[0].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
-                winfo[0].flags = 0;
-                ret = ids_play_stream(&winfo[0], 1, 0, NULL, this, &mPlayerList[i]);
-                if (0 != ret)
-                    strcpy(mPlayerStatus[i], "");
-                else
+                mWidgetList[i]->mText = QString("connect failed.");
+                for (j=0; j<IPC_CFG_STITCH_CNT; j++)
                 {
-                    strcpy(mPlayerStatus[i], "connect failed.\n");
-                    strcat(mPlayerStatus[i], winfo[0].media_url);
+                    if (mIpcCfgAll.ipc_sti[j].url[0] == 0)
+                        break;
+                    mWidgetList[i]->mText += QString("\n");
+                    mWidgetList[i]->mText += QString(mIpcCfgAll.ipc_sti[j].url);
                 }
             }
-        } //else
-    } //for (i=0; i<mWinNum; i++)
-    for (i=0; i<mWinNum; i++)
-        if (0 != mPlayerStatus[i][0])
-            mWidgetList[i]->hide();
-    this->repaint();
-    mMutex.unlock();
+        }
+    } //if (vid == 0) // stitch
+    else if (vid == 1) //link
+    {
+        mWinIdLink = i;
+    } //else if (vid == 1) //link
+    else
+    {
+        Q_ASSERT(vid < 2+IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT);
+        if (vid < 2+IPC_CFG_STITCH_CNT)
+            winfo[0].media_url = mIpcCfgAll.ipc_sti[vid-2].url;
+        else
+            winfo[0].media_url = mIpcCfgAll.ipc[vid-2-IPC_CFG_STITCH_CNT].url;
+        if (0 == winfo[0].media_url[0])
+            ((textWidget *)mWidgetList[i])->mText = QString("url is null.");
+        else
+        {
+            winfo[0].win_w = this->mWidgetList[i]->width();
+            winfo[0].win_h = this->mWidgetList[i]->height();
+            winfo[0].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
+            winfo[0].flags = 0;
+            ret = ids_play_stream(&winfo[0], 1, 0, NULL, this, &mPlayerList[i]);
+            if (0 != ret)
+                mWidgetList[i]->mText = QString("");
+            else
+            {
+                mWidgetList[i]->mText = QString("connect failed.\n");
+                mWidgetList[i]->mText += QString(winfo[0].media_url);
+            }
+        }
+    } //else
+    mWidgetList[i]->repaint();
 }
 
 void idsServer::idsPlayerStopSlot(void)
 {
+    showVideo(false);
     mMutex.lock();
     int i;
 
@@ -376,7 +457,6 @@ void idsServer::idsPlayerStopSlot(void)
         }
     }
     mWinNum = 0;
-    this->repaint();
     mMutex.unlock();
 }
 
@@ -392,6 +472,8 @@ void idsServer::sceneSwitchSlot(void)
 
 void idsServer::chnCfgSlot(void)
 {
+    showVideo(false);
+
     ChnCfgDialog chnCfg;
     chnCfg.setGeometry(200, 200, 640, 480);
 
@@ -399,6 +481,8 @@ void idsServer::chnCfgSlot(void)
         chnCfg.exec();
     else
         qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", chnCfg.mMsgRet);
+
+    showVideo(true);
 }
 
 void idsServer::layoutCfgSlot(void)

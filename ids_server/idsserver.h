@@ -11,7 +11,29 @@
 #include <QNetworkInterface>
 #include <QFrame>
 #include <QColorDialog>
+#include <QDesktopWidget>
 #include "app_amp.h"
+
+class textWidget : public QWidget
+{
+    Q_OBJECT
+    public:
+    textWidget(QWidget *parent);
+    ~textWidget();
+    QString mText;
+    protected:
+    virtual void paintEvent(QPaintEvent* event);
+};
+
+class PlayThread : public QThread
+{
+     Q_OBJECT
+protected:
+     void run();
+public:
+     void *mPriv;
+     int mPlayerid;
+};
 
 namespace Ui {
 class idsServer;
@@ -36,10 +58,12 @@ public:
 signals:
     void idsPlayerStart();
     void idsPlayerStop();
+    void idsPlayerStartOne(int);
 
 public slots:
     void idsPlayerStartSlot(void);
     void idsPlayerStopSlot(void);
+    void idsPlayerStartOneSlot(int);
     void sceneSwitchSlot(void);
     void chnCfgSlot(void);
     void layoutCfgSlot(void);
@@ -51,10 +75,12 @@ public slots:
 protected:
     void paintEvent(QPaintEvent*);
     void showEvent(QShowEvent *);
+    void closeEvent(QCloseEvent *);
 
 private:
     void newSceneList(void);
     void deleteSceneList(void);
+    void showVideo(bool);
 
     Ui::idsServer     *ui;
     QMenu              *mMainMenu;                          //主菜单
@@ -74,8 +100,9 @@ private:
     int                       mWinNum;
     int                       mWinIdStitch, mWinIdLink;
     IdsPlayer           *mPlayerList[IDS_LAYOUT_WIN_MAX_NUM];
-    QWidget            *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
-    char                    mPlayerStatus[IDS_LAYOUT_WIN_MAX_NUM][256];
+    textWidget        *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
+    QWidget            *mWidgetBackground;
+    PlayThread        mPlayThread[IDS_LAYOUT_WIN_MAX_NUM];
 
     QMutex              mMutex;
 };
