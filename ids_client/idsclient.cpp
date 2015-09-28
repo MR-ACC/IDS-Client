@@ -3,6 +3,7 @@
 #include "../common/displaycfgdialog.h"
 #include "../common/chncfgdialog.h"
 #include "../common/netcfgdialog.h"
+#include "upgradedialog.h"
 #include <QDebug>
 #include <QMessageBox>
 
@@ -108,7 +109,7 @@ void idsclient::on_pushButton_dispcfg_clicked()
 void idsclient::on_pushButton_netcfg_clicked()
 {
     int ret;
-    NetCfgDialog netCfg;
+    /*NetCfgDialog netCfg;
 
     if (mIdsEndpoint == NULL)
     {
@@ -122,5 +123,8 @@ void idsclient::on_pushButton_netcfg_clicked()
         return ;
     }
 
-    netCfg.exec();
+    netCfg.exec();*/
+    Dialog upgrade(this, ui->lineEdit_ip->text());
+    upgrade.exec();
+
 }
