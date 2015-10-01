@@ -71,27 +71,27 @@ idsServer::idsServer(QWidget *parent) :
     setGeometry(0, 0, QApplication::desktop()->width(), QApplication::desktop()->height());
     setWindowFlags(Qt::FramelessWindowHint);
 
-    mChnCfg = new QAction(tr("通道配置 "), this);
+    mChnCfg = new QAction(tr("通道配置"), this);
     mChnCfg->setIcon(QIcon(":/image/ipc.ico"));
     connect(mChnCfg, SIGNAL(triggered()), this, SLOT(chnCfgSlot()));
 
-    mLayoutCfg = new QAction(tr("layout配置 "), this);
+    mLayoutCfg = new QAction(tr("布局配置"), this);
     mLayoutCfg->setIcon(QIcon(":/image/layout.ico"));
     connect(mLayoutCfg, SIGNAL(triggered()), this, SLOT(layoutCfgSlot()));
 
-    mDispmodeCfg = new QAction(tr("display mode配置 "), this);
+    mDispmodeCfg = new QAction(tr("显示模式"), this);
     mDispmodeCfg->setIcon(QIcon(":/image/dispmode.ico"));
     connect(mDispmodeCfg, SIGNAL(triggered()), this, SLOT(dispmodeCfgSlot()));
 
-    mNetCfg = new QAction(tr("网络配置 "), this);
+    mNetCfg = new QAction(tr("网络配置"), this);
     mNetCfg->setIcon(QIcon(":/image/network.ico"));
     connect(mNetCfg, SIGNAL(triggered()), this, SLOT(netCfgSlot()));
 
-    mAbout = new QAction(tr("关    于"), this);
+    mAbout = new QAction(tr("关于"), this);
     mAbout->setIcon(QIcon(":/image/about.ico"));
     connect(mAbout, SIGNAL(triggered()), this, SLOT(aboutSlot()));
 
-    mExit = new QAction(tr("关    机"), this);
+    mExit = new QAction(tr("关机"), this);
     mExit->setIcon(QIcon(":/image/exit.ico"));
     connect(mExit, SIGNAL(triggered()), this, SLOT(exitSlot()));
 
@@ -276,7 +276,7 @@ void idsServer::idsPlayerStartSlot(void)
                                                             winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H,
                                                             winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W,
                                                             winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
-        mWidgetList[i]->mStatusText = QString("connecting...");
+        mWidgetList[i]->mStatusText = QString("连接中...");
         mWidgetList[i]->show();
         mWidgetList[i]->repaint();
 
@@ -310,7 +310,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
             winfo[j].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
 #ifdef IDS_SERVER_RENDER_OPENGL
             winfo[j].flags = IDS_USE_THE_SAME_WINDOW | IDS_ENABLE_ALGO_GL_HWACCEL;
-            winfo[j].draw = glwidget_render_frame_cb;
+            winfo[j].draw = glvideowidget_render_frame_cb;
             winfo[j].priv = this->mWidgetList[i];
 #else
             winfo[j].flags = IDS_USE_THE_SAME_WINDOW;
@@ -318,7 +318,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
 #endif
         }
         if (j == 0)
-            mWidgetList[i]->mStatusText = QString("url is null.");
+            mWidgetList[i]->mStatusText = QString("路径无效");
         else
         {
             ret = ids_play_stream(&winfo[0], j, IDS_TYPE(IDS_TYPE_STITCH) | IDS_TYPE(IDS_TYPE_MOUSE_LINKAGE), NULL, this, &mPlayerList[i]);
@@ -326,7 +326,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
                 mWidgetList[i]->mStatusText = QString("");
             else
             {
-                mWidgetList[i]->mStatusText = QString("connect failed.");
+                mWidgetList[i]->mStatusText = QString("连接失败");
                 for (j=0; j<IPC_CFG_STITCH_CNT; j++)
                 {
                     if (mIpcCfgAll.ipc_sti[j].url[0] == 0)
@@ -349,7 +349,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
         else
             winfo[0].media_url = mIpcCfgAll.ipc[vid-2-IPC_CFG_STITCH_CNT].url;
         if (0 == winfo[0].media_url[0])
-            mWidgetList[i]->mStatusText = QString("url is null.");
+            mWidgetList[i]->mStatusText = QString("路径无效");
         else
         {
             winfo[0].win_w = this->mWidgetList[i]->width();
@@ -357,7 +357,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
             winfo[0].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
 #ifdef IDS_SERVER_RENDER_OPENGL
             winfo[0].flags = IDS_ENABLE_ALGO_GL_HWACCEL;
-            winfo[0].draw = glwidget_render_frame_cb;
+            winfo[0].draw = glvideowidget_render_frame_cb;
             winfo[0].priv = this->mWidgetList[i];
 #else
             winfo[0].flags = 0;
@@ -368,7 +368,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
                 mWidgetList[i]->mStatusText = QString("");
             else
             {
-                mWidgetList[i]->mStatusText = QString("connect failed.\n");
+                mWidgetList[i]->mStatusText = QString("连接失败\n");
                 mWidgetList[i]->mStatusText += QString(winfo[0].media_url);
             }
         }
@@ -428,7 +428,7 @@ void idsServer::dispmodeCfgSlot(void)
 {
     displayCfgDialog dispCfg;
     dispCfg.update(mIdsEndpoint);
-    dispCfg.setGeometry(200, 200, 600, 400);
+    dispCfg.setGeometry(200, 200, dispCfg.width(), dispCfg.height());
     dispCfg.exec();
 }
 
@@ -442,12 +442,11 @@ void idsServer::netCfgSlot(void)
 
 void idsServer::aboutSlot(void)
 {
-    QMessageBox::about(this, tr("关于"), tr("ids_server"));
+    QMessageBox::about(this, tr("关于"), tr("视频拼接服务器"));
 }
 
 void idsServer::exitSlot(void)
 {
-    idsPlayerStopSlot();
     QMessageBox *msgBox = new QMessageBox(QMessageBox::Warning
                                           , tr("警告")
                                           , tr("是否确认关机?")
@@ -455,7 +454,10 @@ void idsServer::exitSlot(void)
                                           , NULL);
     msgBox->setWindowFlags(Qt::FramelessWindowHint);
     if (msgBox->exec() == QMessageBox::Yes)
+    {
+        idsPlayerStopSlot();
         QProcess::execute("shutdown -h now");
+    }
 
     delete msgBox;
 }

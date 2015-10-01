@@ -38,26 +38,26 @@ GLVideoWidget::GLVideoWidget(QWidget *parent) :
 
 void GLVideoWidget::renderOneFrame()
 {
-    //GLVideoWidget lock
-    if (mImgBuf == NULL)
+    if (mInitFlag == false)
     {
-        if (mInit == false)
-        {
-            mInit = true;
-            this->makeCurrent();
-            this->updateGL();
-        }
+        mInitFlag = true;
+        this->makeCurrent();
+        this->updateGL();
         return;
     }
+    if (mImgBuf == NULL)
+        return;
+
     if (mUpdateFlag)
     {
+        //GLVideoWidget lock
         mUpdateFlag = false;
         if (mImgBufType == CV_IMG_TYPE_OPENCV_CPU)
             this->imshow(*(cv::Mat *)mImgBuf);
         else
             this->imshow(*(cv::cuda::GpuMat*)mImgBuf);
+        //GLVideoWidget unlock
     }
-    //GLVideoWidget unlock
 }
 
 void GLVideoWidget::imshow(InputArray _img)
@@ -84,21 +84,21 @@ void GLVideoWidget::imshow(InputArray _img)
 }
 
 void GLVideoWidget::initializeGL() {
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_COLOR_MATERIAL);
-    glEnable(GL_BLEND);
-    glEnable(GL_POLYGON_SMOOTH);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//    glDisable(GL_TEXTURE_2D);
+//    glDisable(GL_DEPTH_TEST);
+//    glDisable(GL_COLOR_MATERIAL);
+//    glEnable(GL_BLEND);
+//    glEnable(GL_POLYGON_SMOOTH);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(0, 0, 0, 0);
 }
 
 void GLVideoWidget::resizeGL(int w, int h) {
     glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0, w, 0, h); // set origin to bottom left corner
-    glMatrixMode(GL_MODELVIEW);
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
+//    gluOrtho2D(0, w, 0, h); // set origin to bottom left corner
+//    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
 

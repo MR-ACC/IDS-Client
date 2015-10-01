@@ -1,7 +1,7 @@
 #ifndef VIDEOWIDGET_H
 #define VIDEOWIDGET_H
 
-//#define IDS_CV_CUDA_HWACCEL_SUPPORTED
+#define IDS_CV_CUDA_HWACCEL_SUPPORTED
 //#define IDS_SERVER_RENDER_OPENGL
 
 #ifdef IDS_CV_CUDA_HWACCEL_SUPPORTED
@@ -26,6 +26,9 @@ using namespace cv;
 using namespace cuda;
 #include <QtOpenGL/QGLWidget>
 #include <QTimer>
+#include <QtGui>
+#include <QDebug>
+#include <QApplication>
 
 #define VideoWidget GLVideoWidget
 

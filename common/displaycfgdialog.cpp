@@ -182,8 +182,8 @@ void displayCfgDialog::update(gpointer endpoint)
     if (mDispModeRet != MSG_EXECUTE_OK)
     {
         QString text;
-        text.sprintf("display mode preview error. code: %d", mDispModeRet);
-        QMessageBox::critical(this, "tips", text, QMessageBox::Yes, NULL);
+        text.sprintf("显示模式预览失败. 错误码: %d", mDispModeRet);
+        QMessageBox::critical(this, "提示", text, QMessageBox::Yes, NULL);
     }
 }
 
@@ -195,8 +195,8 @@ displayCfgDialog::~displayCfgDialog()
     if (mDispModeRet != MSG_EXECUTE_OK)
     {
         QString text;
-        text.sprintf("display mode preview error. code: %d", mDispModeRet);
-        QMessageBox::critical(this, "tips", text, QMessageBox::Yes, NULL);
+        text.sprintf("显示模式预览失败. 错误码: %d", mDispModeRet);
+        QMessageBox::critical(this, "提示", text, QMessageBox::Yes, NULL);
     }
 
     delete ui;
@@ -292,6 +292,8 @@ void displayCfgDialog::mousePressEvent(QMouseEvent *e)
     x = (e->x()-x) / ratio;
     y = (e->y()-y) / ratio;
 
+    int go = (e->button() == Qt::LeftButton) ? 1 : (mMonitorInfos.monitor_nums-1);
+
     for (i=0; i<mDispMode.monitor_nums; i++)
     {
         if (x >= mDispMode.monitor_mode_infos[i].pos_x &&
@@ -301,7 +303,7 @@ void displayCfgDialog::mousePressEvent(QMouseEvent *e)
         {
             while (true)
             {
-                mMonitorId[i] = (mMonitorId[i]+1) % mMonitorInfos.monitor_nums;
+                mMonitorId[i] = (mMonitorId[i]+go) % mMonitorInfos.monitor_nums;
                 if (mMonitorValid[mMonitorId[i]] == TRUE)
                     break;
             }
@@ -328,14 +330,14 @@ void displayCfgDialog::accept()
         {
             if (mMonitorId[i] == mMonitorId[j])
             {
-                QMessageBox::critical(this, "tips", "monitors conflict...", QMessageBox::Yes, NULL);
+                QMessageBox::critical(this, "提示", "显示器冲突", QMessageBox::Yes, NULL);
                 return;
             }
         }
     }
 
-    QMessageBox message(QMessageBox::NoIcon, "display configration",
-                        "the application will restart. are you sure to continue?", QMessageBox::Yes | QMessageBox::No, NULL);
+    QMessageBox message(QMessageBox::NoIcon, "显示模式设置",
+                        "更改显示模式后,程序将重启,确认更改吗?", QMessageBox::Yes | QMessageBox::No, NULL);
     if(message.exec() == QMessageBox::Yes)
     {
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SET_DISPLAY_MODE,
@@ -346,8 +348,8 @@ void displayCfgDialog::accept()
         else
         {
             QString text;
-            text.sprintf("display mode set error. code: %d", mDispModeRet);
-            QMessageBox::information(this, "tips", text, QMessageBox::Yes, NULL);
+            text.sprintf("显示模式设置失败. 错误码: %d", mDispModeRet);
+            QMessageBox::information(this, "提示", text, QMessageBox::Yes, NULL);
         }
     }
 }
@@ -383,7 +385,7 @@ void displayCfgDialog::modeResChanged()
     if (mModeId == -1 || mResId == -1)
     {
         ui->listWidget_monitor->clear();
-        this->ui->label_monitors->setText("all monitors");
+        this->ui->label_monitors->setText("所有显示器");
         for (i=0; i<mMonitorInfos.monitor_nums; i++)
             ui->listWidget_monitor->addItem(QString(mMonitorInfos.monitor_infos[i].name));
         return;
@@ -406,7 +408,7 @@ void displayCfgDialog::modeResChanged()
         }
     }
     ui->listWidget_monitor->clear();
-    this->ui->label_monitors->setText("valid monitors");
+    this->ui->label_monitors->setText("支持的显示器");
     for (i=0; i<mMonitorInfos.monitor_nums; i++)
         if (mMonitorValid[i] == TRUE)
             ui->listWidget_monitor->addItem(QString(mMonitorInfos.monitor_infos[i].name));

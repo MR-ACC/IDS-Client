@@ -35,9 +35,9 @@ ChnCfgDialog::ChnCfgDialog(QWidget *parent) :
     this->ui->tableWidget->setColumnWidth(0, 400);
     int i;
     for (i=0; i<IPC_CFG_STITCH_CNT; i++)
-        this->ui->tableWidget->setVerticalHeaderItem(i,new QTableWidgetItem(QString().sprintf("stitch source %d",i+1)));
+        this->ui->tableWidget->setVerticalHeaderItem(i,new QTableWidgetItem(QString().sprintf("高点摄像机%d",i+1)));
     for (i=0; i<IPC_CFG_NORMAL_CNT; i++)
-        this->ui->tableWidget->setVerticalHeaderItem(IPC_CFG_STITCH_CNT+i,new QTableWidgetItem(QString().sprintf("normal source %d",i+1)));
+        this->ui->tableWidget->setVerticalHeaderItem(IPC_CFG_STITCH_CNT+i,new QTableWidgetItem(QString().sprintf("低点摄像机%d",i+1)));
 }
 
 ChnCfgDialog::~ChnCfgDialog()
