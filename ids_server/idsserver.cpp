@@ -5,45 +5,43 @@
 #include "../common/chncfgdialog.h"
 #include <QThread>
 
-textWidget::textWidget(QWidget *parent) :
-    QWidget(parent)
+GLVideoWidget::GLVideoWidget(QWidget *parent) :
+    GLWidget((GLWidget*)parent)
 {
+    setWindowFlags(Qt::FramelessWindowHint);
+
     QPalette palette;
-    palette.setColor(QPalette::Background, QColor(50,50,50));
+    palette.setColor(QPalette::Background, QColor(0,50,0));
     this->setPalette(palette);
-    setAutoFillBackground(true);
-    setAttribute(Qt::WA_TranslucentBackground,false);
-    setWindowFlags(Qt::FramelessWindowHint| Qt::Window | Qt::BypassWindowManagerHint
-                   | Qt::WindowTransparentForInput | Qt::WindowStaysOnBottomHint);
 }
 
-textWidget::~textWidget()
+GLVideoWidget::~GLVideoWidget()
 {
 
+}
+
+void GLVideoWidget::paintEvent(QPaintEvent* event)
+{
+    if (mText != "")
+    {
+//        QPainter painter(this);
+//        QFont font = QApplication::font();
+//        font.setPixelSize(20);
+//        painter.setFont(font);
+
+//        QRect rect;
+//        rect = QRect(5, 5, width()-10, height()-10);
+//        painter.setPen(QColor(80,80,80));
+//        painter.drawRect(rect);
+//        painter.setPen(QColor(180,180,180));
+//        painter.drawText(rect, Qt::AlignCenter, mText);
+    }
 }
 
 void PlayThread::run()
 {
     emit ((idsServer *)mPriv)->idsPlayerStartOneSlot(mPlayerid);
     qDebug() << __func__ << __LINE__ << "mPlayerid" << mPlayerid;
-}
-
-void textWidget::paintEvent(QPaintEvent* event)
-{
-    if (mText != "")
-    {
-        QPainter painter(this);
-        QFont font = QApplication::font();
-        font.setPixelSize(20);
-        painter.setFont(font);
-
-        QRect rect;
-        rect = QRect(5, 5, width()-10, height()-10);
-        painter.setPen(QColor(80,80,80));
-        painter.drawRect(rect);
-        painter.setPen(QColor(180,180,180));
-        painter.drawText(rect, Qt::AlignCenter, mText);
-    }
 }
 
 static int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
@@ -106,16 +104,10 @@ idsServer::idsServer(QWidget *parent) :
 
     setGeometry(0, 0, QApplication::desktop()->width(), QApplication::desktop()->height());
     setWindowFlags(Qt::FramelessWindowHint);
-    setAttribute(Qt::WA_TranslucentBackground,true);
+//    setAttribute(Qt::WA_TranslucentBackground,true);
 
 //    this->setWindowState( Qt::WindowFullScreen );
 //    this->setWindowOpacity(0.3);
-
-    mWidgetBackground = new QWidget(this);
-    mWidgetBackground->setGeometry(0, 0, QApplication::desktop()->width(), QApplication::desktop()->height());
-    mWidgetBackground->setAutoFillBackground(true);
-    mWidgetBackground->setPalette(palette);
-    mWidgetBackground->show();
 
     mChnCfg = new QAction(tr("通道配置 "), this);
     mChnCfg->setIcon(QIcon(":/image/ipc.ico"));
@@ -214,7 +206,6 @@ idsServer::idsServer(QWidget *parent) :
 
 idsServer::~idsServer()
 {
-    delete mWidgetBackground;
     delete mSceneGroup;
 //    delete mSceneSwitchMenu;
     delete mMainMenu;
@@ -271,7 +262,7 @@ void idsServer::paintEvent(QPaintEvent*)
         painter.setPen(Qt::red);
         font.setPixelSize(20);
         painter.setFont(font);
-        painter.drawText(QRect(600, 10, 100, 100), Qt::AlignCenter, "Main window is transparent. you can't see me.");
+        painter.drawText(QRect(200, 10, 400, 400), Qt::AlignCenter, "Main window is transparent. you can't see me.");
 
 //        QBitmap bitMap(width(),height()); // A bit map has the same size with current widget
 //        QPainter p(&bitMap);
@@ -316,15 +307,6 @@ void idsServer::deleteSceneList(void)
     }
     mSceneNum = 0;
 }
-void idsServer::showVideo(bool show)
-{
-    int i;
-    for (i=0; i<mWinNum; i++)
-        if (show == true)
-            mWidgetList[i]->show();
-        else
-            mWidgetList[i]->hide();
-}
 
 void idsServer::idsPlayerStartSlot(void)
 {
@@ -347,16 +329,19 @@ void idsServer::idsPlayerStartSlot(void)
     for (i=0; i<mWinNum; i++)
    {
         mPlayerList[i] = NULL;
-        mWidgetList[i] = new textWidget(this); //textWidget(this)
+        mWidgetList[i] = new GLVideoWidget(this);
         mWidgetList[i]->setGeometry(
-                                  winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W + this->pos().x(),
-                                  winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H + this->pos().y(),
+//                    winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W + this->pos().x(),
+//                    winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H + this->pos().y(),
+                    winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W,
+                    winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H,
                                   winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W,
                                   winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
         mWidgetList[i]->mText = QString("connecting...");
-        mWidgetList[i]->repaint();
+//        mWidgetList[i]->repaint();
         mWidgetList[i]->show();
 
+//        idsPlayerStartOneSlot(i);
         mPlayThread[i].mPriv = (void *)this;
         mPlayThread[i].mPlayerid = i;
         mPlayThread[i].start();
@@ -382,7 +367,9 @@ void idsServer::idsPlayerStartOneSlot(int i)
             winfo[j].win_w = this->mWidgetList[i]->width();
             winfo[j].win_h = this->mWidgetList[i]->height();
             winfo[j].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
-            winfo[j].flags = IDS_USE_THE_SAME_WINDOW;
+            winfo[j].flags = IDS_USE_THE_SAME_WINDOW | IDS_ENABLE_ALGO_GL_HWACCEL;
+            winfo[j].draw = glwidget_render_frame_cb;
+            winfo[j].priv = this->mWidgetList[i];
         }
         if (j == 0)
             mWidgetList[i]->mText = QString("url is null.");
@@ -416,13 +403,15 @@ void idsServer::idsPlayerStartOneSlot(int i)
         else
             winfo[0].media_url = mIpcCfgAll.ipc[vid-2-IPC_CFG_STITCH_CNT].url;
         if (0 == winfo[0].media_url[0])
-            ((textWidget *)mWidgetList[i])->mText = QString("url is null.");
+            ((GLVideoWidget *)mWidgetList[i])->mText = QString("url is null.");
         else
         {
             winfo[0].win_w = this->mWidgetList[i]->width();
             winfo[0].win_h = this->mWidgetList[i]->height();
             winfo[0].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
-            winfo[0].flags = 0;
+            winfo[0].flags = IDS_ENABLE_ALGO_GL_HWACCEL;
+            winfo[0].draw = glwidget_render_frame_cb;
+            winfo[0].priv = this->mWidgetList[i];
             ret = ids_play_stream(&winfo[0], 1, 0, NULL, this, &mPlayerList[i]);
             if (0 != ret)
                 mWidgetList[i]->mText = QString("");
@@ -438,7 +427,6 @@ void idsServer::idsPlayerStartOneSlot(int i)
 
 void idsServer::idsPlayerStopSlot(void)
 {
-    showVideo(false);
     mMutex.lock();
     int i;
 
@@ -472,8 +460,6 @@ void idsServer::sceneSwitchSlot(void)
 
 void idsServer::chnCfgSlot(void)
 {
-    showVideo(false);
-
     ChnCfgDialog chnCfg;
     chnCfg.setGeometry(200, 200, 640, 480);
 
@@ -481,8 +467,6 @@ void idsServer::chnCfgSlot(void)
         chnCfg.exec();
     else
         qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", chnCfg.mMsgRet);
-
-    showVideo(true);
 }
 
 void idsServer::layoutCfgSlot(void)

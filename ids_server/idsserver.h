@@ -12,14 +12,15 @@
 #include <QFrame>
 #include <QColorDialog>
 #include <QDesktopWidget>
+#include "glwidget.h"
 #include "app_amp.h"
 
-class textWidget : public QWidget
+class GLVideoWidget : public GLWidget
 {
     Q_OBJECT
     public:
-    textWidget(QWidget *parent);
-    ~textWidget();
+    GLVideoWidget(QWidget *parent);
+    ~GLVideoWidget();
     QString mText;
     protected:
     virtual void paintEvent(QPaintEvent* event);
@@ -80,7 +81,6 @@ protected:
 private:
     void newSceneList(void);
     void deleteSceneList(void);
-    void showVideo(bool);
 
     Ui::idsServer     *ui;
     QMenu              *mMainMenu;                          //主菜单
@@ -100,8 +100,7 @@ private:
     int                       mWinNum;
     int                       mWinIdStitch, mWinIdLink;
     IdsPlayer           *mPlayerList[IDS_LAYOUT_WIN_MAX_NUM];
-    textWidget        *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
-    QWidget            *mWidgetBackground;
+    GLVideoWidget        *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
     PlayThread        mPlayThread[IDS_LAYOUT_WIN_MAX_NUM];
 
     QMutex              mMutex;
