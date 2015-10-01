@@ -3,45 +3,11 @@
 #include "../common/displaycfgdialog.h"
 #include "../common/netcfgdialog.h"
 #include "../common/chncfgdialog.h"
-#include <QThread>
-
-GLVideoWidget::GLVideoWidget(QWidget *parent) :
-    GLWidget((GLWidget*)parent)
-{
-    setWindowFlags(Qt::FramelessWindowHint);
-
-    QPalette palette;
-    palette.setColor(QPalette::Background, QColor(0,50,0));
-    this->setPalette(palette);
-}
-
-GLVideoWidget::~GLVideoWidget()
-{
-
-}
-
-void GLVideoWidget::paintEvent(QPaintEvent* event)
-{
-    if (mText != "")
-    {
-//        QPainter painter(this);
-//        QFont font = QApplication::font();
-//        font.setPixelSize(20);
-//        painter.setFont(font);
-
-//        QRect rect;
-//        rect = QRect(5, 5, width()-10, height()-10);
-//        painter.setPen(QColor(80,80,80));
-//        painter.drawRect(rect);
-//        painter.setPen(QColor(180,180,180));
-//        painter.drawText(rect, Qt::AlignCenter, mText);
-    }
-}
 
 void PlayThread::run()
 {
-    emit ((idsServer *)mPriv)->idsPlayerStartOneSlot(mPlayerid);
     qDebug() << __func__ << __LINE__ << "mPlayerid" << mPlayerid;
+    emit ((idsServer *)mPriv)->idsPlayerStartOneSlot(mPlayerid);
 }
 
 static int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
@@ -104,10 +70,6 @@ idsServer::idsServer(QWidget *parent) :
 
     setGeometry(0, 0, QApplication::desktop()->width(), QApplication::desktop()->height());
     setWindowFlags(Qt::FramelessWindowHint);
-//    setAttribute(Qt::WA_TranslucentBackground,true);
-
-//    this->setWindowState( Qt::WindowFullScreen );
-//    this->setWindowOpacity(0.3);
 
     mChnCfg = new QAction(tr("通道配置 "), this);
     mChnCfg->setIcon(QIcon(":/image/ipc.ico"));
@@ -201,7 +163,7 @@ idsServer::idsServer(QWidget *parent) :
 
     newSceneList();
     mSceneId = 0;                                                       //default play the first scene
-    QTimer::singleShot(500, this, SLOT(idsPlayerStartSlot()));
+    QTimer::singleShot(1000, this, SLOT(idsPlayerStartSlot()));
 }
 
 idsServer::~idsServer()
@@ -240,7 +202,7 @@ void idsServer::paintEvent(QPaintEvent*)
     if (TRUE == mDispmodePreviewFlag)
     {
         painter.setPen(Qt::white);
-        font.setPixelSize(60);
+        font.setPixelSize(30);
         painter.setFont(font);
 
         for (i=0; i<mDispmodePreview.monitor_nums; i++)
@@ -259,26 +221,6 @@ void idsServer::paintEvent(QPaintEvent*)
     }
     else
     {
-        painter.setPen(Qt::red);
-        font.setPixelSize(20);
-        painter.setFont(font);
-        painter.drawText(QRect(200, 10, 400, 400), Qt::AlignCenter, "Main window is transparent. you can't see me.");
-
-//        QBitmap bitMap(width(),height()); // A bit map has the same size with current widget
-//        QPainter p(&bitMap);
-//        p.setPen(QColor(255,255,255)); // Any color that is not QRgb(0,0,0) is right
-//        p.drawRect(0,0,width(),height());
-//        // Now begin to draw the place where we want to show it
-//        p.setPen(QColor(0,0,0));
-//        p.drawText(QRect(100, 100, 100, 100), Qt::AlignCenter, "test");
-//        p.fillRect(0,0,width()/2,height()/2, Qt::SolidPattern);
-//        p.fillRect(width()/2,height()/2, width()/2,height()/2, Qt::SolidPattern);
-//        setMask(bitMap);
-
-//        painter.setCompositionMode( QPainter::CompositionMode_Clear);
-//        painter.setPen(QColor(255,0,0));
-//        painter.fillRect( 600, 200, 200, 200, Qt::SolidPattern );
-//        painter.fillRect( 400, 200, 400, 400, QColor(0,255,0,255));
     }
 }
 
@@ -329,23 +271,22 @@ void idsServer::idsPlayerStartSlot(void)
     for (i=0; i<mWinNum; i++)
    {
         mPlayerList[i] = NULL;
-        mWidgetList[i] = new GLVideoWidget(this);
-        mWidgetList[i]->setGeometry(
-//                    winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W + this->pos().x(),
-//                    winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H + this->pos().y(),
-                    winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W,
-                    winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H,
-                                  winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W,
-                                  winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
-        mWidgetList[i]->mText = QString("connecting...");
-//        mWidgetList[i]->repaint();
+        mWidgetList[i] = new VideoWidget(this);
+        mWidgetList[i]->setGeometry( winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W,
+                                                            winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H,
+                                                            winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W,
+                                                            winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
+        mWidgetList[i]->mStatusText = QString("connecting...");
         mWidgetList[i]->show();
+        mWidgetList[i]->repaint();
 
 //        idsPlayerStartOneSlot(i);
         mPlayThread[i].mPriv = (void *)this;
         mPlayThread[i].mPlayerid = i;
         mPlayThread[i].start();
     }
+//    for (i=0; i<mWinNum; i++)
+//        mPlayThread[i].wait();
     mMutex.unlock();
 }
 
@@ -367,26 +308,31 @@ void idsServer::idsPlayerStartOneSlot(int i)
             winfo[j].win_w = this->mWidgetList[i]->width();
             winfo[j].win_h = this->mWidgetList[i]->height();
             winfo[j].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
+#ifdef IDS_SERVER_RENDER_OPENGL
             winfo[j].flags = IDS_USE_THE_SAME_WINDOW | IDS_ENABLE_ALGO_GL_HWACCEL;
             winfo[j].draw = glwidget_render_frame_cb;
             winfo[j].priv = this->mWidgetList[i];
+#else
+            winfo[j].flags = IDS_USE_THE_SAME_WINDOW;
+            winfo[j].draw = NULL;
+#endif
         }
         if (j == 0)
-            mWidgetList[i]->mText = QString("url is null.");
+            mWidgetList[i]->mStatusText = QString("url is null.");
         else
         {
             ret = ids_play_stream(&winfo[0], j, IDS_TYPE(IDS_TYPE_STITCH) | IDS_TYPE(IDS_TYPE_MOUSE_LINKAGE), NULL, this, &mPlayerList[i]);
             if (0 != ret)
-                mWidgetList[i]->mText = QString("");
+                mWidgetList[i]->mStatusText = QString("");
             else
             {
-                mWidgetList[i]->mText = QString("connect failed.");
+                mWidgetList[i]->mStatusText = QString("connect failed.");
                 for (j=0; j<IPC_CFG_STITCH_CNT; j++)
                 {
                     if (mIpcCfgAll.ipc_sti[j].url[0] == 0)
                         break;
-                    mWidgetList[i]->mText += QString("\n");
-                    mWidgetList[i]->mText += QString(mIpcCfgAll.ipc_sti[j].url);
+                    mWidgetList[i]->mStatusText += QString("\n");
+                    mWidgetList[i]->mStatusText += QString(mIpcCfgAll.ipc_sti[j].url);
                 }
             }
         }
@@ -403,22 +349,27 @@ void idsServer::idsPlayerStartOneSlot(int i)
         else
             winfo[0].media_url = mIpcCfgAll.ipc[vid-2-IPC_CFG_STITCH_CNT].url;
         if (0 == winfo[0].media_url[0])
-            ((GLVideoWidget *)mWidgetList[i])->mText = QString("url is null.");
+            mWidgetList[i]->mStatusText = QString("url is null.");
         else
         {
             winfo[0].win_w = this->mWidgetList[i]->width();
             winfo[0].win_h = this->mWidgetList[i]->height();
             winfo[0].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
+#ifdef IDS_SERVER_RENDER_OPENGL
             winfo[0].flags = IDS_ENABLE_ALGO_GL_HWACCEL;
             winfo[0].draw = glwidget_render_frame_cb;
             winfo[0].priv = this->mWidgetList[i];
+#else
+            winfo[0].flags = 0;
+            winfo[0].draw = NULL;
+#endif
             ret = ids_play_stream(&winfo[0], 1, 0, NULL, this, &mPlayerList[i]);
             if (0 != ret)
-                mWidgetList[i]->mText = QString("");
+                mWidgetList[i]->mStatusText = QString("");
             else
             {
-                mWidgetList[i]->mText = QString("connect failed.\n");
-                mWidgetList[i]->mText += QString(winfo[0].media_url);
+                mWidgetList[i]->mStatusText = QString("connect failed.\n");
+                mWidgetList[i]->mStatusText += QString(winfo[0].media_url);
             }
         }
     } //else

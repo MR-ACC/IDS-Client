@@ -12,19 +12,9 @@
 #include <QFrame>
 #include <QColorDialog>
 #include <QDesktopWidget>
-#include "glwidget.h"
+#include <QThread>
+#include "videowidget.h"
 #include "app_amp.h"
-
-class GLVideoWidget : public GLWidget
-{
-    Q_OBJECT
-    public:
-    GLVideoWidget(QWidget *parent);
-    ~GLVideoWidget();
-    QString mText;
-    protected:
-    virtual void paintEvent(QPaintEvent* event);
-};
 
 class PlayThread : public QThread
 {
@@ -100,7 +90,7 @@ private:
     int                       mWinNum;
     int                       mWinIdStitch, mWinIdLink;
     IdsPlayer           *mPlayerList[IDS_LAYOUT_WIN_MAX_NUM];
-    GLVideoWidget        *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
+    VideoWidget        *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
     PlayThread        mPlayThread[IDS_LAYOUT_WIN_MAX_NUM];
 
     QMutex              mMutex;
