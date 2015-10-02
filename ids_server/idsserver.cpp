@@ -237,6 +237,8 @@ void idsServer::newSceneList(void)
         mSceneGroup->addAction(mSceneList[i]);                                                         //添加菜单项到组里
         mSceneSwitchMenu->addAction(mSceneList[i]);                                               //把action项放入子菜单中
     }
+    if (mSceneId >= 0 && mSceneId < mSceneNum)
+        mSceneList[mSceneId]->setChecked(true);
 }
 void idsServer::deleteSceneList(void)
 {
@@ -286,7 +288,9 @@ void idsServer::idsPlayerStartSlot(void)
         mPlayThread[i].start();
     }
 //    for (i=0; i<mWinNum; i++)
+//    {
 //        mPlayThread[i].wait();
+//    }
     mMutex.unlock();
 }
 
@@ -373,7 +377,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
             }
         }
     } //else
-    mWidgetList[i]->repaint();
+    mWidgetList[i]->update(); // can not call repaint in a thread??
 }
 
 void idsServer::idsPlayerStopSlot(void)
