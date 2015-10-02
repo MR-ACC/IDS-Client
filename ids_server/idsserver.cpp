@@ -3,6 +3,7 @@
 #include "../common/displaycfgdialog.h"
 #include "../common/netcfgdialog.h"
 #include "../common/chncfgdialog.h"
+#include "../common/layoutcfgdialog.h"
 
 void PlayThread::run()
 {
@@ -377,11 +378,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
             }
         }
     } //else
-<<<<<<< HEAD
-    mWidgetList[i]->update();
-=======
     mWidgetList[i]->update(); // can not call repaint in a thread??
->>>>>>> 451c748d09b3fb205a6b81b4f005127ccaa43d7d
 }
 
 void idsServer::idsPlayerStopSlot(void)
@@ -420,31 +417,32 @@ void idsServer::sceneSwitchSlot(void)
 void idsServer::chnCfgSlot(void)
 {
     ChnCfgDialog chnCfg;
-    chnCfg.setGeometry(200, 200, 640, 480);
-
-    if (chnCfg.update(mIdsEndpoint))
-        chnCfg.exec();
-    else
-        qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", chnCfg.mMsgRet);
+//    chnCfg.setGeometry(200, 200, chnCfg.width(), chnCfg.height());
+    chnCfg.idsUpdate(mIdsEndpoint);
+    chnCfg.exec();
 }
 
 void idsServer::layoutCfgSlot(void)
 {
+    layoutCfgDialog layoutDialog;
+//    layoutDialog.setGeometry(200, 200, layoutDialog.width(), layoutDialog.height());
+    layoutDialog.idsUpdate(mIdsEndpoint);
+    layoutDialog.exec();
 }
 
 void idsServer::dispmodeCfgSlot(void)
 {
     displayCfgDialog dispCfg;
-    dispCfg.update(mIdsEndpoint);
     dispCfg.setGeometry(200, 200, dispCfg.width(), dispCfg.height());
+    dispCfg.idsUpdate(mIdsEndpoint);
     dispCfg.exec();
 }
 
 void idsServer::netCfgSlot(void)
 {
     NetCfgDialog netCfg;
-    netCfg.update(mIdsEndpoint);
-    netCfg.setGeometry(200, 200, 200, 200);
+    netCfg.setGeometry(200, 200, netCfg.width(), netCfg.height());
+    netCfg.idsUpdate(mIdsEndpoint);
     netCfg.exec();
 }
 

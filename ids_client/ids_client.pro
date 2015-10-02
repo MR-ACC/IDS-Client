@@ -36,9 +36,7 @@ FORMS    += idsclient.ui \
     upgradedialog.ui \
     ../common/layoutcfgdialog.ui
 
-<<<<<<< HEAD
 
-=======
 unix {
 ROOT_DIR = $$system(pwd)/../../
 ROOT_LIB_DIR = $$ROOT_DIR/lib
@@ -49,24 +47,10 @@ LIBS += -L $$ROOT_LIB_DIR -lids_fw  -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR
 }
 
 win32 {
->>>>>>> 451c748d09b3fb205a6b81b4f005127ccaa43d7d
 ROOT_DIR = $$system(pwd)/../../
 ROOT_LIB_DIR = $$ROOT_DIR/lib
 ROOT_INC_DIR = $$ROOT_DIR/inc
 
-<<<<<<< HEAD
-INCLUDEPATH += $$ROOT_INC_DIR $$ROOT_INC_DIR/glib-2.0 $$ROOT_LIB_DIR/glib-2.0/include
-LIBS += -L $$ROOT_LIB_DIR -lids_fw  -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR
-
-
-#ROOT_DIR = $$system(pwd)/../../
-#ROOT_LIB_DIR = $$ROOT_DIR/win32_build
-#ROOT_INC_DIR = $$ROOT_DIR/inc
-
-#INCLUDEPATH += $$ROOT_INC_DIR $$ROOT_DIR/winlib/win32/include/glib-2.0 $$ROOT_DIR/winlib/win32/lib/glib-2.0/include
-#LIBS += -L $$ROOT_LIB_DIR -lids_fw -lmodules_app_ex -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR
-=======
 INCLUDEPATH += $$ROOT_INC_DIR $$ROOT_DIR/winlib/win32/include/glib-2.0 $$ROOT_DIR/winlib/win32/lib/glib-2.0/include
 LIBS += -L $$ROOT_LIB_DIR -lids_fw -lmodules_app_ex -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR
 }
->>>>>>> 451c748d09b3fb205a6b81b4f005127ccaa43d7d

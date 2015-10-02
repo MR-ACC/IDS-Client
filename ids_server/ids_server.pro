@@ -17,18 +17,21 @@ SOURCES += main.cpp\
     ../common/displaycfgdialog.cpp \
     ../common/netcfgdialog.cpp \
     ../common/chncfgdialog.cpp \
-    videowidget.cpp
+    videowidget.cpp \
+    ../common/layoutcfgdialog.cpp
 
 HEADERS  += idsserver.h \
     ../common/displaycfgdialog.h \
     ../common/netcfgdialog.h \
     ../common/chncfgdialog.h \
-    videowidget.h
+    videowidget.h \
+    ../common/layoutcfgdialog.h
 
 FORMS    += idsserver.ui \
     ../common/displaycfgdialog.ui \
     ../common/netcfgdialog.ui \
-    ../common/chncfgdialog.ui
+    ../common/chncfgdialog.ui \
+    ../common/layoutcfgdialog.ui
 
 ROOT_DIR = $$system(pwd)/../../
 ROOT_LIB_DIR = $$ROOT_DIR/lib
