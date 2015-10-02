@@ -1,7 +1,7 @@
 #ifndef VIDEOWIDGET_H
 #define VIDEOWIDGET_H
 
-//#define IDS_CV_CUDA_HWACCEL_SUPPORTED
+#define IDS_CV_CUDA_HWACCEL_SUPPORTED
 //#define IDS_SERVER_RENDER_OPENGL
 
 #ifdef IDS_CV_CUDA_HWACCEL_SUPPORTED
@@ -40,6 +40,7 @@ class GLVideoWidget : public QGLWidget {
 
 public:
     GLVideoWidget(QWidget *parent = NULL);
+    void    stopRender();
 
     QString           mStatusText;
     void                *mImgBuf;
@@ -74,6 +75,7 @@ private:
 class VideoWidget : public QWidget {
     Q_OBJECT
     public:
+    void    stopRender() {};
     VideoWidget(QWidget *parent);
     ~VideoWidget();
     QString           mStatusText;

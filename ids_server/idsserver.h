@@ -92,6 +92,7 @@ private:
     IdsPlayer           *mPlayerList[IDS_LAYOUT_WIN_MAX_NUM];
     VideoWidget        *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
     PlayThread        mPlayThread[IDS_LAYOUT_WIN_MAX_NUM];
+    QMutex              mPlayMutex[IDS_LAYOUT_WIN_MAX_NUM];
 
     QMutex              mMutex;
 };

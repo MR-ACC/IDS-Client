@@ -35,6 +35,11 @@ GLVideoWidget::GLVideoWidget(QWidget *parent) :
     mTimer->start(20); //fixme
 }
 
+void GLVideoWidget::stopRender()
+{
+    mTimer->stop();
+}
+
 void GLVideoWidget::renderOneFrame()
 {
     if (mInitFlag == false)

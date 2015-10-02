@@ -297,6 +297,8 @@ void idsServer::idsPlayerStartSlot(void)
 
 void idsServer::idsPlayerStartOneSlot(int i)
 {
+    mPlayMutex[i].lock();
+
     qDebug()<<__func__<<__LINE__<<"play: "<<i;
 
     WindowInfo winfo[IPC_CFG_STITCH_CNT];
@@ -379,6 +381,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
         }
     } //else
     mWidgetList[i]->update(); // can not call repaint in a thread??
+    mPlayMutex[i].unlock();
 }
 
 void idsServer::idsPlayerStopSlot(void)
@@ -388,8 +391,10 @@ void idsServer::idsPlayerStopSlot(void)
 
     for (i=0; i<mWinNum; i++)
     {
+        mPlayMutex[i].lock();
         if (mPlayerList[i] != NULL)
         {
+            mWidgetList[i]->stopRender();
             ids_stop_stream(mPlayerList[i]);
             mPlayerList[i] = NULL;
         }
@@ -399,6 +404,7 @@ void idsServer::idsPlayerStopSlot(void)
             delete mWidgetList[i];
             mWidgetList[i] = NULL;
         }
+        mPlayMutex[i].unlock();
     }
     mWinNum = 0;
     mMutex.unlock();
