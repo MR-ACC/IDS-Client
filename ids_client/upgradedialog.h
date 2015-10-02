@@ -39,7 +39,6 @@ private slots:
     void send_slot(int i);
     void time_slot(int i);
     void Update_Slot();
-
 };
 
 #endif // DIALOG_H

@@ -4,7 +4,6 @@
 
 static void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
-    IpcCfgAll *ipc_cfg_all = (IpcCfgAll *)buf;
     if (sizeof(IpcCfgAll) != buf_size)
     {
         Q_ASSERT (buf_size == sizeof(IdsResponse));
@@ -12,6 +11,7 @@ static void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
     }
     else
     {
+        IpcCfgAll *ipc_cfg_all = (IpcCfgAll *)buf;
         ((ChnCfgDialog *)priv)->mIpcCfgAll = *ipc_cfg_all;
         ((ChnCfgDialog *)priv)->mMsgRet = MSG_EXECUTE_OK;
     }
@@ -45,19 +45,19 @@ ChnCfgDialog::~ChnCfgDialog()
     delete ui;
 }
 
-bool ChnCfgDialog::update(gpointer endpoint)
+int ChnCfgDialog::idsUpdate(gpointer endpoint)
 {
     mIdsEndpoint = endpoint;
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_IPC_CFG, -1,
                            NULL, 0, ipc_cfg_get_cb, (void*)this, 3);
     if (mMsgRet != MSG_EXECUTE_OK)
-        return false;
+        return 0;
     int i;
     for (i=0; i<IPC_CFG_STITCH_CNT; i++)
         this->ui->tableWidget->setItem(i, 0, new QTableWidgetItem(this->mIpcCfgAll.ipc_sti[i].url));
     for (i=0; i<IPC_CFG_NORMAL_CNT; i++)
         this->ui->tableWidget->setItem(IPC_CFG_STITCH_CNT+i, 0, new QTableWidgetItem(this->mIpcCfgAll.ipc[i].url));
-    return true;
+    return 1;
 }
 
 void ChnCfgDialog::on_buttonBox_accepted()

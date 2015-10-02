@@ -27,6 +27,10 @@ private slots:
 
     void on_pushButton_chncfg_clicked();
 
+    void on_pushButton_upgrade_clicked();
+
+    void on_pushButton_layoutcfg_clicked();
+
 signals:
     void connect_network(int);
 private:

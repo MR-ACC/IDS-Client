@@ -52,76 +52,9 @@ displayCfgDialog::displayCfgDialog(QWidget *parent) :
     connect(ui->listWidget_res, SIGNAL(itemSelectionChanged()), this, SLOT(modeResChanged()));
 }
 
-void displayCfgDialog::update(gpointer endpoint)
+int displayCfgDialog::idsUpdate(gpointer endpoint)
 {
     //get now mDispMode
-#if 0
-    mDispMode.monitor_nums = 4;
-    strcpy(mDispMode.monitor_mode_infos[0].name, "vir 0");
-    mDispMode.monitor_mode_infos[0].pos_x = 0;
-    mDispMode.monitor_mode_infos[0].pos_y = 0;
-    mDispMode.monitor_mode_infos[0].monitor_res_info =  MonitorResInfo{1920, 1080, 60, 0};
-
-    strcpy(mDispMode.monitor_mode_infos[1].name, "vir 1");
-    mDispMode.monitor_mode_infos[1].pos_x = 1920;
-    mDispMode.monitor_mode_infos[1].pos_y = 0;
-    mDispMode.monitor_mode_infos[1].monitor_res_info = MonitorResInfo{1920, 1080, 60, 0};
-
-    strcpy(mDispMode.monitor_mode_infos[2].name, "vir 2");
-    mDispMode.monitor_mode_infos[2].pos_x = 0;
-    mDispMode.monitor_mode_infos[2].pos_y = 1080;
-    mDispMode.monitor_mode_infos[2].monitor_res_info = MonitorResInfo{1920, 1080, 60, 0};
-
-    strcpy(mDispMode.monitor_mode_infos[3].name, "vir 3");
-    mDispMode.monitor_mode_infos[3].pos_x = 1920;
-    mDispMode.monitor_mode_infos[3].pos_y = 1080;
-    mDispMode.monitor_mode_infos[3].monitor_res_info = MonitorResInfo{1920, 1080, 60, 0};
-
-    //get monitors
-    MonitorResInfo res0 = {1920, 1080, 60, 0};
-    MonitorResInfo res1 = {1440,  900, 60, 0};
-    MonitorResInfo res2 = {1280,  720, 60, 0};
-    MonitorResInfo res3 = {1024,  768, 60, 0};
-    MonitorResInfo res4 = { 800,  600, 60, 0};
-    MonitorResInfo res_null = { 0,  0, 0, 0};
-    mMonitorInfos.monitor_nums = 6;
-    strcpy(mMonitorInfos.monitor_infos[0].name, "monitor 0");
-    mMonitorInfos.monitor_infos[0].monitor_res_infos[0] = res0;
-    mMonitorInfos.monitor_infos[0].monitor_res_infos[1] = res1;
-    mMonitorInfos.monitor_infos[0].monitor_res_infos[2] = res2;
-    mMonitorInfos.monitor_infos[0].monitor_res_infos[3] = res_null;
-    strcpy(mMonitorInfos.monitor_infos[1].name, "monitor 1");
-    mMonitorInfos.monitor_infos[1].monitor_res_infos[0] = res1;
-    mMonitorInfos.monitor_infos[1].monitor_res_infos[1] = res2;
-    mMonitorInfos.monitor_infos[1].monitor_res_infos[2] = res3;
-    mMonitorInfos.monitor_infos[1].monitor_res_infos[3] = res4;
-    mMonitorInfos.monitor_infos[1].monitor_res_infos[4] = res_null;
-    strcpy(mMonitorInfos.monitor_infos[2].name, "monitor 2");
-    mMonitorInfos.monitor_infos[2].monitor_res_infos[0] = res0;
-    mMonitorInfos.monitor_infos[2].monitor_res_infos[1] = res2;
-    mMonitorInfos.monitor_infos[2].monitor_res_infos[2] = res3;
-    mMonitorInfos.monitor_infos[2].monitor_res_infos[3] = res4;
-    mMonitorInfos.monitor_infos[2].monitor_res_infos[4] = res_null;
-    strcpy(mMonitorInfos.monitor_infos[3].name, "monitor 3");
-    mMonitorInfos.monitor_infos[3].monitor_res_infos[0] = res0;
-    mMonitorInfos.monitor_infos[3].monitor_res_infos[1] = res1;
-    mMonitorInfos.monitor_infos[3].monitor_res_infos[2] = res3;
-    mMonitorInfos.monitor_infos[3].monitor_res_infos[3] = res4;
-    mMonitorInfos.monitor_infos[3].monitor_res_infos[4] = res_null;
-    strcpy(mMonitorInfos.monitor_infos[4].name, "monitor 4");
-    mMonitorInfos.monitor_infos[4].monitor_res_infos[0] = res0;
-    mMonitorInfos.monitor_infos[4].monitor_res_infos[1] = res1;
-    mMonitorInfos.monitor_infos[4].monitor_res_infos[2] = res2;
-    mMonitorInfos.monitor_infos[4].monitor_res_infos[3] = res4;
-    mMonitorInfos.monitor_infos[4].monitor_res_infos[4] = res_null;
-    strcpy(mMonitorInfos.monitor_infos[5].name, "monitor 5");
-    mMonitorInfos.monitor_infos[5].monitor_res_infos[0] = res0;
-    mMonitorInfos.monitor_infos[5].monitor_res_infos[1] = res1;
-    mMonitorInfos.monitor_infos[5].monitor_res_infos[2] = res2;
-    mMonitorInfos.monitor_infos[5].monitor_res_infos[3] = res3;
-    mMonitorInfos.monitor_infos[5].monitor_res_infos[4] = res_null;
-#endif
-
     mIdsEndpoint = endpoint;
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_MONITOR_INFOS,
                            -1, NULL, 0, get_monitor_infos_cb, this, 3);
@@ -185,6 +118,8 @@ void displayCfgDialog::update(gpointer endpoint)
         text.sprintf("显示模式预览失败. 错误码: %d", mDispModeRet);
         QMessageBox::critical(this, "提示", text, QMessageBox::Yes, NULL);
     }
+
+    return 1;
 }
 
 displayCfgDialog::~displayCfgDialog()

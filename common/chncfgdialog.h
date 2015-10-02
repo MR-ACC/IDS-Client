@@ -15,7 +15,7 @@ class ChnCfgDialog : public QDialog
 public:
     explicit ChnCfgDialog(QWidget *parent = 0);
     ~ChnCfgDialog();
-    bool                          update(gpointer);
+    int                          idsUpdate(gpointer);
     gpointer                   mIdsEndpoint;
     int                             mMsgRet;
     IpcCfgAll                  mIpcCfgAll;

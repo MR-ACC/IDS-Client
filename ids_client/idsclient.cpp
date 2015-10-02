@@ -3,6 +3,7 @@
 #include "../common/displaycfgdialog.h"
 #include "../common/chncfgdialog.h"
 #include "../common/netcfgdialog.h"
+#include "../common/layoutcfgdialog.h"
 #include "upgradedialog.h"
 #include <QDebug>
 #include <QMessageBox>
@@ -77,23 +78,27 @@ void idsclient::on_pushButton_connect_clicked()
 
 void idsclient::on_pushButton_chncfg_clicked()
 {
+    int ret;
     ChnCfgDialog chnCfg;
+    chnCfg.setGeometry(200, 200, 640, 480);
 
     if (mIdsEndpoint == NULL)
     {
         QMessageBox::information(NULL, "tips", "please connect first.");
         return ;
     }
-
-    chnCfg.setGeometry(200, 200, 640, 480);
-    if (chnCfg.update(mIdsEndpoint))
-        chnCfg.exec();
-    else
-        qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", chnCfg.mMsgRet);
+    ret = chnCfg.idsUpdate(mIdsEndpoint);
+    if (!ret)
+    {
+        QMessageBox::critical(NULL, "Error", "get channel info failed!");
+        return ;
+    }
+    chnCfg.exec();
 }
 
 void idsclient::on_pushButton_dispcfg_clicked()
 {
+    int ret;
     displayCfgDialog dispCfg;
 
     if (mIdsEndpoint == NULL)
@@ -101,30 +106,57 @@ void idsclient::on_pushButton_dispcfg_clicked()
         QMessageBox::information(NULL, "tips", "please connect first.");
         return ;
     }
-
-    dispCfg.update(mIdsEndpoint);
+    ret = dispCfg.idsUpdate(mIdsEndpoint);
+    if (!ret)
+    {
+        QMessageBox::critical(NULL, "Error", "get display mode info failed!");
+        return ;
+    }
     dispCfg.exec();
 }
 
 void idsclient::on_pushButton_netcfg_clicked()
 {
     int ret;
-    /*NetCfgDialog netCfg;
+    NetCfgDialog netCfg;
 
     if (mIdsEndpoint == NULL)
     {
         QMessageBox::information(NULL, "tips", "please connect first.");
         return ;
     }
-    ret = netCfg.update(mIdsEndpoint);
+    ret = netCfg.idsUpdate(mIdsEndpoint);
     if (!ret)
     {
         QMessageBox::critical(NULL, "Error", "get network info failed!");
         return ;
     }
 
-    netCfg.exec();*/
-    Dialog upgrade(this, ui->lineEdit_ip->text());
-    upgrade.exec();
-
+    netCfg.exec();
 }
+
+void idsclient::on_pushButton_layoutcfg_clicked()
+{
+    int ret;
+    layoutCfgDialog layoutDialog;
+    if (mIdsEndpoint == NULL)
+    {
+        QMessageBox::information(NULL, "tips", "please connect first.");
+        return ;
+    }
+    ret = layoutDialog.idsUpdate(mIdsEndpoint);
+    if (!ret)
+    {
+        QMessageBox::critical(NULL, "Error", "get layout info failed!");
+        return ;
+    }
+
+    layoutDialog.exec();
+}
+
+void idsclient::on_pushButton_upgrade_clicked()
+{
+    Dialog upgradeDialog(this, ui->lineEdit_ip->text());
+    upgradeDialog.exec();
+}
+

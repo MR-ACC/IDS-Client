@@ -18,7 +18,7 @@ public:
     explicit displayCfgDialog(QWidget *parent = 0);
     ~displayCfgDialog();
 
-    void update(gpointer);
+    int idsUpdate(gpointer);
     gpointer                    mIdsEndpoint;
     DisplayModeInfo     mDispMode;
     MonitorInfos            mMonitorInfos;

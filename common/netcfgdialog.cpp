@@ -88,7 +88,7 @@ void get_netinfo_cb(gpointer buf, gint buf_size, gpointer priv)
     pcfgDialog->mNetInfo = *pninfo;
 }
 
-int NetCfgDialog::update(gpointer  endpoint)
+int NetCfgDialog::idsUpdate(gpointer  endpoint)
 {
     ids_net_write_msg_sync(endpoint
                     , IDS_CMD_GET_NETWORK_INFO

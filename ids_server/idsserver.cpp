@@ -373,7 +373,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
             }
         }
     } //else
-    mWidgetList[i]->repaint();
+    mWidgetList[i]->update();
 }
 
 void idsServer::idsPlayerStopSlot(void)

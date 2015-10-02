@@ -1,5 +1,5 @@
 #include "upgradedialog.h"
-#include "ui_dialog.h"
+#include "ui_upgradedialog.h"
 #include "upgradethread.h"
 
 Dialog::Dialog(QWidget *parent, QString ip) :

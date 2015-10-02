@@ -18,30 +18,36 @@ SOURCES += main.cpp\
     ../common/netcfgdialog.cpp \
     ../common/chncfgdialog.cpp \
     upgradedialog.cpp \
-    upgradethread.cpp
+    upgradethread.cpp \
+    ../common/layoutcfgdialog.cpp
 
 HEADERS  += idsclient.h \
     ../common/displaycfgdialog.h \
     ../common/netcfgdialog.h \
     ../common/chncfgdialog.h \
     upgradedialog.h \
-    upgradethread.h
+    upgradethread.h \
+    ../common/layoutcfgdialog.h
 
 FORMS    += idsclient.ui \
     ../common/displaycfgdialog.ui \
     ../common/netcfgdialog.ui \
     ../common/chncfgdialog.ui \
-    upgradedialog.ui
+    upgradedialog.ui \
+    ../common/layoutcfgdialog.ui
 
-#ROOT_DIR = $$system(pwd)/../../
-#ROOT_LIB_DIR = $$ROOT_DIR/lib
-#ROOT_INC_DIR = $$ROOT_DIR/inc
 
-#INCLUDEPATH += $$ROOT_INC_DIR $$ROOT_INC_DIR/glib-2.0 $$ROOT_LIB_DIR/glib-2.0/include
-#LIBS += -L $$ROOT_LIB_DIR -lids_fw  -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR
 ROOT_DIR = $$system(pwd)/../../
-ROOT_LIB_DIR = $$ROOT_DIR/win32_build
+ROOT_LIB_DIR = $$ROOT_DIR/lib
 ROOT_INC_DIR = $$ROOT_DIR/inc
 
-INCLUDEPATH += $$ROOT_INC_DIR $$ROOT_DIR/winlib/win32/include/glib-2.0 $$ROOT_DIR/winlib/win32/lib/glib-2.0/include
-LIBS += -L $$ROOT_LIB_DIR -lids_fw -lmodules_app_ex -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR
+INCLUDEPATH += $$ROOT_INC_DIR $$ROOT_INC_DIR/glib-2.0 $$ROOT_LIB_DIR/glib-2.0/include
+LIBS += -L $$ROOT_LIB_DIR -lids_fw  -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR
+
+
+#ROOT_DIR = $$system(pwd)/../../
+#ROOT_LIB_DIR = $$ROOT_DIR/win32_build
+#ROOT_INC_DIR = $$ROOT_DIR/inc
+
+#INCLUDEPATH += $$ROOT_INC_DIR $$ROOT_DIR/winlib/win32/include/glib-2.0 $$ROOT_DIR/winlib/win32/lib/glib-2.0/include
+#LIBS += -L $$ROOT_LIB_DIR -lids_fw -lmodules_app_ex -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR

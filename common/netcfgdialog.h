@@ -15,7 +15,7 @@ class NetCfgDialog : public QDialog
 public:
     explicit NetCfgDialog(QWidget *parent = 0);
     ~NetCfgDialog();
-    int update(gpointer  endpoint);
+    int idsUpdate(gpointer  endpoint);
     NetInfo mNetInfo;
 private:
     Ui::NetCfgDialog *ui;
