@@ -10,7 +10,6 @@ void glvideowidget_render_frame_cb(gpointer priv, gpointer buf, gint buf_type)
 {
     GLVideoWidget *window = (GLVideoWidget *)priv;
 
-    //qDebug() << "render frame";
     //window lock
     window->mImgBuf = buf;
     window->mImgBufType  = buf_type;
@@ -66,7 +65,6 @@ void GLVideoWidget::imshow(InputArray _img)
 
     if (_img.kind() == _InputArray::CUDA_GPU_MAT)
     {
-        //qDebug() << "in gpu mat";
         mOglBuf.copyFrom(_img);
         mOglBuf.setAutoRelease(false);
 
@@ -75,7 +73,6 @@ void GLVideoWidget::imshow(InputArray _img)
     }
     else
     {
-        //qDebug() << "not in gpu mat";
         mOglTex.copyFrom(_img);
         mOglTex.setAutoRelease(false);
     }
@@ -105,12 +102,10 @@ void GLVideoWidget::resizeGL(int w, int h) {
 void GLVideoWidget::paintGL() {
     if (mImgBuf == NULL)
     {
-        //qDebug() << "paintGL. opengl";
         glClear(GL_COLOR_BUFFER_BIT);
     }
     else
     {
-        //qDebug() << "paintGL. show tex";
         double ratio = MIN( (double)this->width() / mOglTex.cols(), (double)this->height() / mOglTex.rows());
         double w = ratio * mOglTex.cols() / this->width();
         double h = ratio * mOglTex.rows() / this->height();
