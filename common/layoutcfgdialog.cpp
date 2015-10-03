@@ -485,9 +485,9 @@ void layoutCfgDialog::on_btnDoneNew_clicked()
         QMessageBox::information(this, tr("提示"), tr("联动窗口不能多于1"));
         return;
     }
-    qDebug()<<"on_btnDoneNew_clicked   mlayout.num: "<<mlayout.num;
+    qDebug()<<"on_btnDoneNew_clicked   mlayout.num: "<<mlayout.num<<"mWinCount"<<mWinCount;
 
-    for(int i = mWinCount; mWinCount < IDS_LAYOUT_WIN_MAX_NUM; i++)
+    for(int i = mWinCount; i < IDS_LAYOUT_WIN_MAX_NUM; i++)
         mlayout.layout[mlayout.num].win[i].w = 0;
 
     this->ui->btnNewLayout->setEnabled(true);
@@ -520,9 +520,11 @@ void layoutCfgDialog::on_btnCancelNew_clicked()
 
 void layoutCfgDialog::on_comboBoxLayoutList_currentIndexChanged(int index)
 {
+    qDebug()<<"on_comboBoxLayoutList_currentIndexChanged"<<index;
     if(index < 0)
     {
         mCurSelectedLayout = 0;
+        mCurSelectedWin = -1;
         isNewLayout = true;
     }
     else
@@ -530,13 +532,13 @@ void layoutCfgDialog::on_comboBoxLayoutList_currentIndexChanged(int index)
         mCurSelectedLayout = index;
         qDebug()<<"mCurSelectedLayout: "<<mCurSelectedLayout;
         isLayoutSwitch = true;
-        for(int i = 0; i < IDS_LAYOUT_WIN_H; i++)
-            for(int j = 0; j < IDS_LAYOUT_WIN_W; j++)
-            {
-                mlayoutMatrix[i][j] = 1;
-            }
         mCurSelectedWin = -1;
     }
+    for(int i = 0; i < IDS_LAYOUT_WIN_H; i++)
+        for(int j = 0; j < IDS_LAYOUT_WIN_W; j++)
+        {
+            mlayoutMatrix[i][j] = 1;
+        }
     update();
 }
 
@@ -610,6 +612,15 @@ int layoutCfgDialog::idsUpdate(gpointer endpoint)
                            NULL, 0, layout_get_cb, (void*)this, 3);
     if (mMsgRet != MSG_EXECUTE_OK)
         return 0;
+    qDebug()<<"mlayout.num"<<mlayout.num;
+    if(mlayout.num == 0)
+    {
+        for(int i = 0; i < IDS_LAYOUT_WIN_H; i++)
+            for(int j = 0; j < IDS_LAYOUT_WIN_W; j++)
+            {
+                mlayoutMatrix[i][j] = 1;
+            }
+    }
     for(int i = 0; i < mlayout.num; i++)
         this->ui->comboBoxLayoutList->addItem(QString(mlayout.layout[i].name));
     return 1;
