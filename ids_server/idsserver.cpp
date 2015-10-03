@@ -16,13 +16,13 @@ static int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
     if (pev->info.ptr == NULL)
     {
         ((idsServer *)priv)->mDispmodePreviewFlag = FALSE;
-        emit ((idsServer *)priv)->idsPlayerStart();
+        emit ((idsServer *)priv)->idsPlayerHide();
     }
     else
     {
         ((idsServer *)priv)->mDispmodePreviewFlag = TRUE;
         ((idsServer *)priv)->mDispmodePreview = *((DisplayModeInfo *)pev->info.ptr);
-        emit ((idsServer *)priv)->idsPlayerStop();
+        emit ((idsServer *)priv)->idsPlayerShow();
     }
     return EHR_ACCEPT;
 }
@@ -104,6 +104,7 @@ idsServer::idsServer(QWidget *parent) :
         mWidgetList[i] = NULL;
     }
 
+    mSceneId = -1;
     mSceneNum = 0;
     mSceneGroup = new QActionGroup(this);        //创建菜单项组，里面的菜单项为互斥
     for (i=0; i<IDS_LAYOUT_MAX_NUM; i++)
@@ -138,6 +139,8 @@ idsServer::idsServer(QWidget *parent) :
     connect(this, SIGNAL(idsPlayerStart()), this, SLOT(idsPlayerStartSlot()));
     connect(this, SIGNAL(idsPlayerStop()), this, SLOT(idsPlayerStopSlot()));
     connect(this, SIGNAL(idsPlayerStartOne(int)), this, SLOT(idsPlayerStartOneSlot(int)));
+    connect(this, SIGNAL(idsPlayerHide()), this, SLOT(idsPlayerHideSlot()));
+    connect(this, SIGNAL(idsPlayerShow()), this, SLOT(idsPlayerShowSlot()));
 
     if (TRUE != ids_core_init())
         throw QString("ids init core library failed");
@@ -163,8 +166,8 @@ idsServer::idsServer(QWidget *parent) :
         QMessageBox::critical(this, "error", QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet), QMessageBox::Yes, NULL);
 
     newSceneList();
-    mSceneId = 0;                                                       //default play the first scene
-    QTimer::singleShot(1000, this, SLOT(idsPlayerStartSlot()));
+//    mSceneId = 0;                                                       //default play the first scene
+//    QTimer::singleShot(1000, this, SLOT(idsPlayerStartSlot()));
 }
 
 idsServer::~idsServer()
@@ -190,6 +193,13 @@ void idsServer::closeEvent(QCloseEvent *)
 
 void idsServer::showEvent(QShowEvent *)
 {
+//    static int init = 0;
+//    if (init == 0)
+//    {
+//        init = 1;
+//        mSceneId = 0;                                                       //default play the first scene
+//        idsPlayerStartSlot();
+//    }
 }
 
 void idsServer::paintEvent(QPaintEvent*)
@@ -273,7 +283,6 @@ void idsServer::idsPlayerStartSlot(void)
 
     for (i=0; i<mWinNum; i++)
    {
-        mPlayerList[i] = NULL;
         mWidgetList[i] = new VideoWidget(this);
         mWidgetList[i]->setGeometry( winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W,
                                                             winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H,
@@ -283,26 +292,20 @@ void idsServer::idsPlayerStartSlot(void)
         mWidgetList[i]->show();
         mWidgetList[i]->repaint();
 
-//        idsPlayerStartOneSlot(i);
         mPlayThread[i].mPriv = (void *)this;
         mPlayThread[i].mPlayerid = i;
         mPlayThread[i].start();
     }
-//    for (i=0; i<mWinNum; i++)
-//    {
-//        mPlayThread[i].wait();
-//    }
     mMutex.unlock();
 }
 
 void idsServer::idsPlayerStartOneSlot(int i)
 {
     mPlayMutex[i].lock();
-
-    qDebug()<<__func__<<__LINE__<<"play: "<<i;
+    mPlayerList[i] = NULL;
 
     WindowInfo winfo[IPC_CFG_STITCH_CNT];
-    int j, vid, ret;
+    int j, vid, ret = -2;
     vid = mLayoutAll.layout[mSceneId].win[i].vid;
     if (vid == 0) // stitch
     {
@@ -380,6 +383,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
             }
         }
     } //else
+    qDebug() << __func__ << "play: " << i << ". ret: " << ret << ". status: " << mWidgetList[i]->mStatusText;
     mWidgetList[i]->update(); // can not call repaint in a thread??
     mPlayMutex[i].unlock();
 }
@@ -410,6 +414,24 @@ void idsServer::idsPlayerStopSlot(void)
     mMutex.unlock();
 }
 
+void idsServer::idsPlayerHideSlot(void)
+{
+    mMutex.lock();
+    int i;
+    for (i=0; i<mWinNum; i++)
+        mWidgetList[i]->hide();
+    mMutex.unlock();
+}
+
+void idsServer::idsPlayerShowSlot(void)
+{
+    mMutex.lock();
+    int i;
+    for (i=0; i<mWinNum; i++)
+        mWidgetList[i]->show();
+    mMutex.unlock();
+}
+
 void idsServer::sceneSwitchSlot(void)
 {
     if (mSceneId != mSceneGroup->checkedAction()->whatsThis().toInt())
@@ -424,32 +446,32 @@ void idsServer::chnCfgSlot(void)
 {
     ChnCfgDialog chnCfg;
 //    chnCfg.setGeometry(200, 200, chnCfg.width(), chnCfg.height());
-    chnCfg.idsUpdate(mIdsEndpoint);
-    chnCfg.exec();
+    if (chnCfg.idsUpdate(mIdsEndpoint))
+        chnCfg.exec();
 }
 
 void idsServer::layoutCfgSlot(void)
 {
     layoutCfgDialog layoutDialog;
 //    layoutDialog.setGeometry(200, 200, layoutDialog.width(), layoutDialog.height());
-    layoutDialog.idsUpdate(mIdsEndpoint);
-    layoutDialog.exec();
+    if (layoutDialog.idsUpdate(mIdsEndpoint))
+        layoutDialog.exec();
 }
 
 void idsServer::dispmodeCfgSlot(void)
 {
     displayCfgDialog dispCfg;
-    dispCfg.setGeometry(200, 200, dispCfg.width(), dispCfg.height());
-    dispCfg.idsUpdate(mIdsEndpoint);
-    dispCfg.exec();
+//    dispCfg.setGeometry(200, 200, dispCfg.width(), dispCfg.height());
+    if (dispCfg.idsUpdate(mIdsEndpoint))
+        dispCfg.exec();
 }
 
 void idsServer::netCfgSlot(void)
 {
     NetCfgDialog netCfg;
-    netCfg.setGeometry(200, 200, netCfg.width(), netCfg.height());
-    netCfg.idsUpdate(mIdsEndpoint);
-    netCfg.exec();
+//    netCfg.setGeometry(200, 200, netCfg.width(), netCfg.height());
+    if (netCfg.idsUpdate(mIdsEndpoint))
+        netCfg.exec();
 }
 
 void idsServer::aboutSlot(void)

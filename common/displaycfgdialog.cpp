@@ -7,31 +7,32 @@
 const int mode_v_cnt[MAX_MODE_NUMBERS] = {1, 1, 1, 1, 2, 2, 2, 0};
 const int mode_h_cnt[MAX_MODE_NUMBERS] = {1, 2, 3, 4, 2, 3, 4, 0};
 
-#define IDS_MSG_CHECK_GET_RESPONSE \
-    do { \
-        if (buf_size == sizeof(IdsResponse)) { \
-            IdsResponse *pres = (IdsResponse *)buf; \
-            Q_ASSERT(pres->magic == IDS_RESPONSE_MAGIC); \
-            qDebug() << __func__ << __LINE__ << "ret:" << pres->ret; \
-            if (pres->ret != MSG_EXECUTE_OK) \
-                return; \
-        } \
-    }while (0)
-
 static void get_monitor_infos_cb(gpointer buf, gint buf_size, gpointer priv)
 {
-    IDS_MSG_CHECK_GET_RESPONSE;
-
-    Q_ASSERT(buf_size == sizeof(MonitorInfos));
-    ((displayCfgDialog *)priv)->mMonitorInfos = *(MonitorInfos *)buf;
+    if (sizeof(MonitorInfos) != buf_size)
+    {
+        Q_ASSERT (buf_size == sizeof(IdsResponse));
+        ((displayCfgDialog *)priv)->mMsgRet = ((IdsResponse*)buf)->ret;
+    }
+    else
+    {
+        ((displayCfgDialog *)priv)->mMonitorInfos = *(MonitorInfos *)buf;
+        ((displayCfgDialog *)priv)->mMsgRet = MSG_EXECUTE_OK;
+    }
 }
 
 static void get_display_mode_cb(gpointer buf, gint buf_size, gpointer priv)
 {
-    IDS_MSG_CHECK_GET_RESPONSE;
-
-    Q_ASSERT(buf_size == sizeof(DisplayModeInfo));
-    ((displayCfgDialog *)priv)->mDispMode = *(DisplayModeInfo *)buf;
+    if (sizeof(DisplayModeInfo) != buf_size)
+    {
+        Q_ASSERT (buf_size == sizeof(IdsResponse));
+        ((displayCfgDialog *)priv)->mMsgRet = ((IdsResponse*)buf)->ret;
+    }
+    else
+    {
+        ((displayCfgDialog *)priv)->mDispMode = *(DisplayModeInfo *)buf;
+        ((displayCfgDialog *)priv)->mMsgRet = MSG_EXECUTE_OK;
+    }
 }
 
 static void set_preview_display_mode_cb(gpointer buf, gint buf_size, gpointer priv)
@@ -39,8 +40,7 @@ static void set_preview_display_mode_cb(gpointer buf, gint buf_size, gpointer pr
     Q_ASSERT(buf_size == sizeof(IdsResponse));
     IdsResponse *pres = (IdsResponse *)buf;
     Q_ASSERT(pres->magic == IDS_RESPONSE_MAGIC);
-    qDebug() << __func__ << __LINE__ << "ret:" << pres->ret;
-    ((displayCfgDialog *)priv)->mDispModeRet = pres->ret;
+    ((displayCfgDialog *)priv)->mMsgRet = pres->ret;
 }
 
 displayCfgDialog::displayCfgDialog(QWidget *parent) :
@@ -58,8 +58,19 @@ int displayCfgDialog::idsUpdate(gpointer endpoint)
     mIdsEndpoint = endpoint;
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_MONITOR_INFOS,
                            -1, NULL, 0, get_monitor_infos_cb, this, 3);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        return 0;
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_DISPLAY_MODE,
                            -1, NULL, 0, get_display_mode_cb, this, 3);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        return 0;
+
+    //set ids_server display mode preview mode.
+    int start = 1;
+    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_PREVIEW_DISPLAY_MODE,
+                           -1, &start, sizeof(start), set_preview_display_mode_cb, this, 3);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        return 0;
 
     int i, j, k;
 
@@ -108,29 +119,19 @@ int displayCfgDialog::idsUpdate(gpointer endpoint)
     ui->listWidget_monitor->clear();
     for (i=0; i<mMonitorInfos.monitor_nums; i++)
         ui->listWidget_monitor->addItem(QString(mMonitorInfos.monitor_infos[i].name));
-
-    int start = 1;
-    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_PREVIEW_DISPLAY_MODE,
-                           -1, &start, sizeof(start), set_preview_display_mode_cb, this, 3);
-    if (mDispModeRet != MSG_EXECUTE_OK)
-    {
-        QString text;
-        text.sprintf("显示模式预览失败. 错误码: %d", mDispModeRet);
-        QMessageBox::critical(this, "提示", text, QMessageBox::Yes, NULL);
-    }
-
     return 1;
 }
 
 displayCfgDialog::~displayCfgDialog()
 {
+    //cancle ids_server display mode preview mode.
     int end = 0;
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_PREVIEW_DISPLAY_MODE,
                            -1, &end, sizeof(end), set_preview_display_mode_cb, this, 3);
-    if (mDispModeRet != MSG_EXECUTE_OK)
+    if (mMsgRet != MSG_EXECUTE_OK)
     {
         QString text;
-        text.sprintf("显示模式预览失败. 错误码: %d", mDispModeRet);
+        text.sprintf("取消显示模式预览失败. 错误码: %d", mMsgRet);
         QMessageBox::critical(this, "提示", text, QMessageBox::Yes, NULL);
     }
 
@@ -278,12 +279,12 @@ void displayCfgDialog::accept()
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SET_DISPLAY_MODE,
                                -1, &mDispMode, sizeof(mDispMode), set_preview_display_mode_cb, this, 3);
 
-        if (mDispModeRet == MSG_EXECUTE_OK)
+        if (mMsgRet == MSG_EXECUTE_OK)
             this->close();
         else
         {
             QString text;
-            text.sprintf("显示模式设置失败. 错误码: %d", mDispModeRet);
+            text.sprintf("显示模式设置失败. 错误码: %d", mMsgRet);
             QMessageBox::information(this, "提示", text, QMessageBox::Yes, NULL);
         }
     }

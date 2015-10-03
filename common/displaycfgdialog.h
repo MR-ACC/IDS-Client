@@ -22,7 +22,7 @@ public:
     gpointer                    mIdsEndpoint;
     DisplayModeInfo     mDispMode;
     MonitorInfos            mMonitorInfos;
-    int                              mDispModeRet;
+    int                              mMsgRet;
 
 protected:
     void paintEvent(QPaintEvent*);

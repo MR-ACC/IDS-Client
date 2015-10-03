@@ -600,7 +600,14 @@ void layoutCfgDialog::on_buttonBox_accepted()
 {
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SET_LAYOUT, -1,
                            &mlayout, sizeof(IdsLayoutAll), layout_set_cb, (void*)this, 1);
-    this->close();
+    if (mMsgRet == MSG_EXECUTE_OK)
+        this->close();
+    else
+    {
+        QString text;
+        text.sprintf("布局设置失败. 错误码: %d", mMsgRet);
+        QMessageBox::information(this, "提示", text, QMessageBox::Yes, NULL);
+    }
 }
 
 void layoutCfgDialog::on_buttonBox_rejected()

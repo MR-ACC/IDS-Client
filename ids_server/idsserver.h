@@ -47,14 +47,18 @@ public:
     bool                          mDispmodePreviewFlag;
 
 signals:
+    void idsPlayerStartOne(int);
     void idsPlayerStart();
     void idsPlayerStop();
-    void idsPlayerStartOne(int);
+    void idsPlayerHide();
+    void idsPlayerShow();
 
 public slots:
+    void idsPlayerStartOneSlot(int);
     void idsPlayerStartSlot(void);
     void idsPlayerStopSlot(void);
-    void idsPlayerStartOneSlot(int);
+    void idsPlayerHideSlot(void);
+    void idsPlayerShowSlot(void);
     void sceneSwitchSlot(void);
     void chnCfgSlot(void);
     void layoutCfgSlot(void);
