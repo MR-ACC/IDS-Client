@@ -160,15 +160,19 @@ idsServer::idsServer(QWidget *parent) :
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_LAYOUT, -1,
                            NULL, 0, layout_get_cb, (void*)this, 1);
     if (mMsgRet != MSG_EXECUTE_OK)
-        QMessageBox::critical(this, "error", QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet), QMessageBox::Yes, NULL);
+        qDebug() << QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet);
+
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_IPC_CFG, -1,
                            NULL, 0, ipc_cfg_get_cb, (void*)this, 1);
     if (mMsgRet != MSG_EXECUTE_OK)
-        QMessageBox::critical(this, "error", QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet), QMessageBox::Yes, NULL);
+        qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet);
 
     newSceneList();
-    mSceneId = 0;                                                       //default play the first scene
-    QTimer::singleShot(1000, this, SLOT(idsPlayerStartSlot()));
+    if (mSceneNum > 0)
+    {
+        mSceneId = 0;                                                       //default play the first scene
+        QTimer::singleShot(1000, this, SLOT(idsPlayerStartSlot()));
+    }
 }
 
 idsServer::~idsServer()
@@ -256,9 +260,10 @@ void idsServer::deleteSceneList(void)
 
 void idsServer::idsPlayerStartSlot(void)
 {
-    mMutex.lock();
     if (mSceneId < 0 || mSceneId >= mSceneNum)
         return;
+
+    mMutex.lock();
 
     int winW = this->width();
     int winH = this->height();
@@ -452,7 +457,9 @@ void idsServer::chnCfgSlot(void)
     ChnCfgDialog chnCfg;
 //    chnCfg.setGeometry(200, 200, chnCfg.width(), chnCfg.height());
     if (chnCfg.idsUpdate(mIdsEndpoint))
+    {
         chnCfg.exec();
+    }
 }
 
 void idsServer::layoutCfgSlot(void)
@@ -509,7 +516,7 @@ void idsServer::contextMenuEvent(QContextMenuEvent *e)
                                NULL, 0, layout_get_cb, (void*)this, 1);
         if (mMsgRet != MSG_EXECUTE_OK)
         {
-            //            qDebug() << QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet);
+            qDebug() << QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet);
             mMutex.unlock();
             return;
         }
@@ -517,7 +524,7 @@ void idsServer::contextMenuEvent(QContextMenuEvent *e)
                                NULL, 0, ipc_cfg_get_cb, (void*)this, 1);
         if (mMsgRet != MSG_EXECUTE_OK)
         {
-//            qDebug() << QString().sprintf("ids cmd get ipc cfg error. code = %d.", mMsgRet);
+            qDebug() << QString().sprintf("ids cmd get ipc cfg error. code = %d.", mMsgRet);
             mMutex.unlock();
             return;
         }
