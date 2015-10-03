@@ -22,7 +22,7 @@ GLVideoWidget::GLVideoWidget(QWidget *parent) :
 {
     setWindowFlags(Qt::FramelessWindowHint);
     QPalette palette;
-    palette.setColor(QPalette::Background, QColor(0,20,0));
+    palette.setColor(QPalette::Background, QColor(30,30,30));
     this->setPalette(palette);
 
     mStatusText = "    ";//blank
@@ -123,14 +123,14 @@ void GLVideoWidget::paintGL() {
 
 void GLVideoWidget::paintEvent(QPaintEvent* event)
 {
+    QPainter painter(this);
+    QFont font = QApplication::font();
+    font.setPixelSize(20);
+    painter.setFont(font);
+    QRect rect;
+
     if (mStatusText != "")
     {
-        QPainter painter(this);
-        QFont font = QApplication::font();
-        font.setPixelSize(20);
-        painter.setFont(font);
-
-        QRect rect;
         rect = QRect(5, 5, width()-10, height()-10);
         painter.setPen(QColor(80,80,80));
         painter.drawRect(rect);
@@ -145,7 +145,7 @@ VideoWidget::VideoWidget(QWidget *parent) :
     QWidget(parent)
 {
     QPalette palette;
-    palette.setColor(QPalette::Background, QColor(0,50,0));
+    palette.setColor(QPalette::Background, QColor(30,30,30));
     this->setPalette(palette);
 }
 
@@ -163,7 +163,7 @@ void VideoWidget::paintEvent(QPaintEvent* event)
         painter.setFont(font);
         QRect rect;
         rect = QRect(5, 5, width()-10, height()-10);
-        painter.setPen(QColor(30,30,30));
+        painter.setPen(QColor(80,80,80));
         painter.drawRect(rect);
         painter.setPen(QColor(180,180,180));
         painter.drawText(rect, Qt::AlignCenter, mStatusText);

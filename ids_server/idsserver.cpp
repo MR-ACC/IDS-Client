@@ -102,8 +102,7 @@ idsServer::idsServer(QWidget *parent) :
     for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
     {
         mPlayerList[i] = NULL;
-        mWidgetList[i] = new VideoWidget(this);
-        mWidgetList[i]->hide();
+        mWidgetList[i] = NULL;
     }
 
     mSceneId = -1;
@@ -174,12 +173,6 @@ idsServer::idsServer(QWidget *parent) :
 
 idsServer::~idsServer()
 {
-    int i;
-    for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
-    {
-        mWidgetList[i]->close();
-        delete mWidgetList[i];
-    }
     delete mSceneGroup;
 //    delete mSceneSwitchMenu;
     delete mMainMenu;
@@ -281,19 +274,19 @@ void idsServer::idsPlayerStartSlot(void)
 
     for (i=0; i<mWinNum; i++)
     {
+        mWidgetList[i] = new VideoWidget(this);
+
+        qDebug() <<"win:"<<i<<"winid:"<<mWidgetList[i]->winId(); //hack tech!!!! do not delete me!!!!
         qDebug() <<"win:"<<i<<"winid:"<<mWidgetList[i]->winId(); //hack tech!!!! do not delete me!!!!
 
-        mWidgetList[i]->setGeometry( winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W,
-                                                            winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H,
-                                                            winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W,
-                                                            winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
+        mWidgetList[i]->setGeometry(winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W,
+                                    winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H,
+                                    winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W,
+                                    winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
         mWidgetList[i]->mStatusText = QString("连接中...");
         mWidgetList[i]->show();
-        mWidgetList[i]->repaint();
-    }
+        mWidgetList[i]->update();
 
-    for (i=0; i<mWinNum; i++)
-    {
         mPlayThread[i].mPriv = (void *)this;
         mPlayThread[i].mPlayerid = i;
         mPlayThread[i].start();
@@ -305,6 +298,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
 {
     mPlayMutex[i].lock();
     qDebug()<<__func__<< i << "lock.";
+
     mPlayerList[i] = NULL;
 
     WindowInfo winfo[IPC_CFG_STITCH_CNT];
@@ -387,6 +381,8 @@ void idsServer::idsPlayerStartOneSlot(int i)
         }
     } //else
     mWidgetList[i]->update(); // can not call repaint in a thread??
+    if (ret > 0)
+//        mWidgetList[i]->startRender();
     qDebug()<<__func__<< i << "unlock." << "ret: " << ret << "status: "<<mWidgetList[i]->mStatusText ;
     mPlayMutex[i].unlock();
 }
@@ -399,14 +395,15 @@ void idsServer::idsPlayerStopSlot(void)
     {
         mPlayMutex[i].lock();
 
+        Q_ASSERT(mWidgetList[i] != NULL);
         mWidgetList[i]->stopRender();
-        mWidgetList[i]->hide();
-
         if (mPlayerList[i] != NULL)
         {
             ids_stop_stream(mPlayerList[i]);
             mPlayerList[i] = NULL;
         }
+        mWidgetList[i]->close();
+        delete mWidgetList[i];
 
         mPlayMutex[i].unlock();
     }
@@ -419,7 +416,11 @@ void idsServer::idsPlayerHideSlot(void)
     mMutex.lock();
     int i;
     for (i=0; i<mWinNum; i++)
+    {
+        mPlayMutex[i].lock();
         mWidgetList[i]->hide();
+        mPlayMutex[i].unlock();
+    }
     mMutex.unlock();
 }
 
@@ -428,7 +429,11 @@ void idsServer::idsPlayerShowSlot(void)
     mMutex.lock();
     int i;
     for (i=0; i<mWinNum; i++)
+    {
+        mPlayMutex[i].lock();
         mWidgetList[i]->show();
+        mPlayMutex[i].unlock();
+    }
     mMutex.unlock();
 }
 
@@ -503,11 +508,19 @@ void idsServer::contextMenuEvent(QContextMenuEvent *e)
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_LAYOUT, -1,
                                NULL, 0, layout_get_cb, (void*)this, 1);
         if (mMsgRet != MSG_EXECUTE_OK)
-            qDebug() << QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet);
+        {
+            //            qDebug() << QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet);
+            mMutex.unlock();
+            return;
+        }
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_IPC_CFG, -1,
                                NULL, 0, ipc_cfg_get_cb, (void*)this, 1);
         if (mMsgRet != MSG_EXECUTE_OK)
-            qDebug() << QString().sprintf("ids cmd get ipc cfg error. code = %d.", mMsgRet);
+        {
+//            qDebug() << QString().sprintf("ids cmd get ipc cfg error. code = %d.", mMsgRet);
+            mMutex.unlock();
+            return;
+        }
         deleteSceneList();
         newSceneList();
         mMutex.unlock();
