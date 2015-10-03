@@ -2,6 +2,7 @@
 #include "ui_displaycfgdialog.h"
 #include <QtGui>
 #include <QMessageBox>
+#include <QDesktopWidget>
 
 #define MAX_MODE_NUMBERS 20
 const int mode_v_cnt[MAX_MODE_NUMBERS] = {1, 1, 1, 1, 2, 2, 2, 0};
@@ -48,6 +49,9 @@ displayCfgDialog::displayCfgDialog(QWidget *parent) :
     ui(new Ui::displayCfgDialog)
 {
     ui->setupUi(this);
+    QDesktopWidget* desktop = QApplication::desktop();
+    move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
+
     connect(ui->listWidget_mode, SIGNAL(itemSelectionChanged()), this, SLOT(modeResChanged()));
     connect(ui->listWidget_res, SIGNAL(itemSelectionChanged()), this, SLOT(modeResChanged()));
 }

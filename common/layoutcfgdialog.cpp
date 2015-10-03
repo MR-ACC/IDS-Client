@@ -1,5 +1,6 @@
 #include "layoutcfgdialog.h"
 #include "ui_layoutcfgdialog.h"
+#include <QDesktopWidget>
 
 static void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
@@ -30,6 +31,8 @@ layoutCfgDialog::layoutCfgDialog(QWidget *parent) :
 {
     //QApplication::setFont(QFont("Times New Roman",14));
     ui->setupUi(this);
+    QDesktopWidget* desktop = QApplication::desktop();
+    move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
     isDrawing = false;
     isLayoutSwitch = false;
     isNewLayout = false;
@@ -119,7 +122,9 @@ layoutCfgDialog::layoutCfgDialog(QWidget *parent) :
     mVidList[2] = "高点1";
     mVidList[3] = "高点2";
     mVidList[4] = "高点3";
-    for(int i = 5; i < 70; i++)
+    mVidList[5] = "高点4";
+
+    for(int i = 6; i < 70; i++)
     {
         mVidList[i] = "低点" + QString::number(i - 5);
     }
@@ -222,7 +227,7 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
                 if(this->ui->comboBoxCameraType->currentIndex() <= 2)
                     mlayout.layout[mlayout.num].win[mWinCount].vid = this->ui->comboBoxCameraType->currentIndex() + this->ui->comboBoxChannel->currentIndex();
                 else
-                    mlayout.layout[mlayout.num].win[mWinCount].vid = 5 + this->ui->comboBoxChannel->currentIndex();
+                    mlayout.layout[mlayout.num].win[mWinCount].vid = 6 + this->ui->comboBoxChannel->currentIndex();
 
                 QRect rect(drawX*minWidth + 2,drawY*minWidth + 2,drawW*minWidth - 4,drawH*minWidth - 4);
                 pp.setPen(*mPenSelected); //设置画笔形式
@@ -371,7 +376,7 @@ void layoutCfgDialog::drawGrid(QPainter *painter)
             painter->setPen(*mPenGridCenter); //设置画笔形式
         else
             painter->setPen(*mPenGrid); //设置画笔形式
-        painter->drawLine(rect.left()-5,y,rect.right(),y);
+        painter->drawLine(rect.left(),y,rect.right(),y);
     }
 }
 
@@ -418,7 +423,8 @@ void layoutCfgDialog::on_btnNewLayout_clicked()
         QMessageBox::information(this, tr("提示"), tr("布局名不能为空"));
         return;
     }
-    mlayout.layout[mlayout.num].win[0].w = 0;
+    for(int i = 0; i < IDS_LAYOUT_WIN_MAX_NUM; i++)
+        mlayout.layout[mlayout.num].win[i].w = 0;
 
     memset(mlayout.layout[mlayout.num].name, '\0', sizeof(mlayout.layout[mlayout.num].name));
     strcpy(mlayout.layout[mlayout.num].name, this->ui->lineEditLayoutName->text().toLatin1().data());
@@ -481,6 +487,9 @@ void layoutCfgDialog::on_btnDoneNew_clicked()
     }
     qDebug()<<"on_btnDoneNew_clicked   mlayout.num: "<<mlayout.num;
 
+    for(int i = mWinCount; mWinCount < IDS_LAYOUT_WIN_MAX_NUM; i++)
+        mlayout.layout[mlayout.num].win[i].w = 0;
+
     this->ui->btnNewLayout->setEnabled(true);
     this->ui->comboBoxLayoutList->setEnabled(true);
     this->ui->btnDel->setEnabled(true);
@@ -501,6 +510,9 @@ void layoutCfgDialog::on_btnCancelNew_clicked()
     this->ui->btnCancelNew->setVisible(false);
     this->ui->lineEditLayoutName->setEnabled(true);
 
+    for(int i = 0; i < IDS_LAYOUT_WIN_MAX_NUM; i++)
+        mlayout.layout[mlayout.num].win[i].w = 0;
+
     this->ui->comboBoxLayoutList->removeItem(this->ui->comboBoxLayoutList->currentIndex());
     mCurSelectedWin = -1;
     update();
@@ -508,21 +520,24 @@ void layoutCfgDialog::on_btnCancelNew_clicked()
 
 void layoutCfgDialog::on_comboBoxLayoutList_currentIndexChanged(int index)
 {
-    mCurSelectedLayout = index;
-    qDebug()<<"mCurSelectedLayout: "<<mCurSelectedLayout;
-    isLayoutSwitch = true;
-    for(int i = 0; i < IDS_LAYOUT_WIN_H; i++)
-        for(int j = 0; j < IDS_LAYOUT_WIN_W; j++)
-        {
-            mlayoutMatrix[i][j] = 1;
-        }
-    mCurSelectedWin = -1;
+    if(index < 0)
+    {
+        mCurSelectedLayout = 0;
+        isNewLayout = true;
+    }
+    else
+    {
+        mCurSelectedLayout = index;
+        qDebug()<<"mCurSelectedLayout: "<<mCurSelectedLayout;
+        isLayoutSwitch = true;
+        for(int i = 0; i < IDS_LAYOUT_WIN_H; i++)
+            for(int j = 0; j < IDS_LAYOUT_WIN_W; j++)
+            {
+                mlayoutMatrix[i][j] = 1;
+            }
+        mCurSelectedWin = -1;
+    }
     update();
-}
-
-void layoutCfgDialog::on_btnClose_clicked()
-{
-
 }
 
 void layoutCfgDialog::on_comboBoxCameraType_currentIndexChanged(int index)
@@ -536,12 +551,13 @@ void layoutCfgDialog::on_comboBoxCameraType_currentIndexChanged(int index)
         this->ui->comboBoxChannel->addItem(mVidList[2]);
         this->ui->comboBoxChannel->addItem(mVidList[3]);
         this->ui->comboBoxChannel->addItem(mVidList[4]);
+        this->ui->comboBoxChannel->addItem(mVidList[5]);
     }
     else if(index == 3)
     {
         for(int i = 0; i < 64; i++)
         {
-            this->ui->comboBoxChannel->addItem(mVidList[i+5]);
+            this->ui->comboBoxChannel->addItem(mVidList[i+6]);
         }
     }
 }
@@ -549,13 +565,16 @@ void layoutCfgDialog::on_comboBoxCameraType_currentIndexChanged(int index)
 void layoutCfgDialog::on_btnDel_clicked()
 {
     QMessageBox::StandardButton rb = QMessageBox::question(NULL, tr("提示"), tr("确认删除此布局吗？"), QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
-    if(rb == QMessageBox::Yes)
+    if(rb == QMessageBox::Yes && mlayout.num > 0)
     {
         mlayout.num--;
+        qDebug()<<"mlayout.num"<<mlayout.num<<this->ui->comboBoxLayoutList->currentIndex();
         for(int i = this->ui->comboBoxLayoutList->currentIndex(); i < mlayout.num; i++)
         {
             memcpy(&(mlayout.layout[i]), &(mlayout.layout[i+1]), sizeof(IdsLayout));
         }
+        for(int i = 0; i < IDS_LAYOUT_WIN_MAX_NUM; i++)
+            mlayout.layout[mlayout.num].win[i].w = 0;
         this->ui->comboBoxLayoutList->removeItem(this->ui->comboBoxLayoutList->currentIndex());
         mCurSelectedWin = -1;
     }
@@ -569,7 +588,7 @@ void layoutCfgDialog::on_comboBoxChannel_currentIndexChanged(int index)
         if(this->ui->comboBoxCameraType->currentIndex() <= 2)
             mlayout.layout[mCurSelectedLayout].win[mCurSelectedWin].vid = this->ui->comboBoxCameraType->currentIndex() + index;
         else
-            mlayout.layout[mCurSelectedLayout].win[mCurSelectedWin].vid = 5 + index;
+            mlayout.layout[mCurSelectedLayout].win[mCurSelectedWin].vid = 6 + index;
         isChangeWinChannel = true;
         update();
     }

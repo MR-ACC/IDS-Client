@@ -39,6 +39,7 @@ private slots:
     void send_slot(int i);
     void time_slot(int i);
     void Update_Slot();
+    void on_pushButtonClose_clicked();
 };
 
 #endif // DIALOG_H

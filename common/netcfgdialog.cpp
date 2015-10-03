@@ -2,13 +2,15 @@
 #include "ui_netcfgdialog.h"
 #include <QDebug>
 #include <QMessageBox>
+#include <QDesktopWidget>
 
 NetCfgDialog::NetCfgDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NetCfgDialog)
 {
     ui->setupUi(this);
-
+    QDesktopWidget* desktop = QApplication::desktop();
+    move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
     layout()->setSizeConstraint(QLayout::SetFixedSize);
 
     connect(ui->NetCfgbuttonBox, SIGNAL(accepted()), this, SLOT(netcfgAccept()));

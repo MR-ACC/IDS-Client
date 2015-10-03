@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     ../common/chncfgdialog.cpp \
     upgradedialog.cpp \
     upgradethread.cpp \
-    ../common/layoutcfgdialog.cpp
+    ../common/layoutcfgdialog.cpp \
+    stitchdialog.cpp
 
 HEADERS  += idsclient.h \
     ../common/displaycfgdialog.h \
@@ -27,14 +28,16 @@ HEADERS  += idsclient.h \
     ../common/chncfgdialog.h \
     upgradedialog.h \
     upgradethread.h \
-    ../common/layoutcfgdialog.h
+    ../common/layoutcfgdialog.h \
+    stitchdialog.h
 
 FORMS    += idsclient.ui \
     ../common/displaycfgdialog.ui \
     ../common/netcfgdialog.ui \
     ../common/chncfgdialog.ui \
     upgradedialog.ui \
-    ../common/layoutcfgdialog.ui
+    ../common/layoutcfgdialog.ui \
+    stitchdialog.ui
 
 
 unix {

@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1440</width>
-    <height>660</height>
+    <width>960</width>
+    <height>460</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>1440</width>
-    <height>660</height>
+    <width>960</width>
+    <height>460</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>1440</width>
-    <height>660</height>
+    <width>960</width>
+    <height>460</height>
    </size>
   </property>
   <property name="font">
@@ -34,13 +34,13 @@
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>534</y>
-     <width>1066</width>
-     <height>102</height>
+     <x>32</x>
+     <y>341</y>
+     <width>892</width>
+     <height>100</height>
     </rect>
    </property>
-   <layout class="QGridLayout" name="gridLayout_4">
+   <layout class="QGridLayout" name="gridLayout_3">
     <item row="0" column="0">
      <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0">
@@ -70,7 +70,13 @@
        <widget class="QPushButton" name="btnDel">
         <property name="minimumSize">
          <size>
-          <width>150</width>
+          <width>100</width>
+          <height>45</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
           <height>45</height>
          </size>
         </property>
@@ -109,14 +115,14 @@
        <widget class="QPushButton" name="btnNewLayout">
         <property name="minimumSize">
          <size>
-          <width>150</width>
+          <width>100</width>
           <height>45</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>150</width>
-          <height>46</height>
+          <width>100</width>
+          <height>45</height>
          </size>
         </property>
         <property name="text">
@@ -148,17 +154,17 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
+      <item row="0" column="2" colspan="2">
        <widget class="QComboBox" name="comboBoxCameraType">
         <property name="minimumSize">
          <size>
-          <width>165</width>
+          <width>100</width>
           <height>45</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>165</width>
+          <width>100</width>
           <height>45</height>
          </size>
         </property>
@@ -184,7 +190,7 @@
         </item>
        </widget>
       </item>
-      <item row="0" column="3" colspan="2">
+      <item row="0" column="4" colspan="2">
        <widget class="QComboBox" name="comboBoxChannel">
         <property name="minimumSize">
          <size>
@@ -195,61 +201,57 @@
        </widget>
       </item>
       <item row="1" column="0" colspan="3">
-       <layout class="QGridLayout" name="gridLayout_3">
-        <item row="0" column="0">
-         <widget class="QPushButton" name="btnDoneNew">
-          <property name="minimumSize">
-           <size>
-            <width>150</width>
-            <height>45</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>150</width>
-            <height>46</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>完成</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QPushButton" name="btnCancelNew">
-          <property name="minimumSize">
-           <size>
-            <width>150</width>
-            <height>45</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>150</width>
-            <height>46</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>取消</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <widget class="QPushButton" name="btnDoneNew">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>45</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>46</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>完成</string>
+        </property>
+       </widget>
       </item>
       <item row="1" column="3">
+       <widget class="QPushButton" name="btnCancelNew">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>45</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>46</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>取消</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="4">
        <spacer name="horizontalSpacer_2">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
+          <width>13</width>
           <height>20</height>
          </size>
         </property>
        </spacer>
       </item>
-      <item row="1" column="4">
+      <item row="1" column="5">
        <widget class="QDialogButtonBox" name="buttonBox">
         <property name="minimumSize">
          <size>

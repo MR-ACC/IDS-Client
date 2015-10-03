@@ -1,6 +1,7 @@
 #include "upgradedialog.h"
 #include "ui_upgradedialog.h"
 #include "upgradethread.h"
+#include <QDesktopWidget>
 
 Dialog::Dialog(QWidget *parent, QString ip) :
     QDialog(parent),
@@ -8,6 +9,8 @@ Dialog::Dialog(QWidget *parent, QString ip) :
 {
     setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint);
     ui->setupUi(this);
+    QDesktopWidget* desktop = QApplication::desktop();
+    move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
     #if 1
     QRegExp rx("((2[0-4]\\d|25[0-5]|[01]?\\d\\d?)\\.){3}(2[0-4]\\d|25[0-5]|[01]?\\d\\d?)");
     QRegExpValidator v(rx,0);
@@ -18,6 +21,8 @@ Dialog::Dialog(QWidget *parent, QString ip) :
     timer=new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(Update_Slot()));
     num=150;
+    this->ui->label->setVisible(false);
+    this->ui->lineEditTag->setVisible(false);
 }
 
 Dialog::~Dialog()
@@ -126,3 +131,8 @@ void Dialog::send_slot(int i)
     status[i] = -1;
 }
 
+
+void Dialog::on_pushButtonClose_clicked()
+{
+    this->close();
+}

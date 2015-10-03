@@ -1,6 +1,7 @@
 #include "chncfgdialog.h"
 #include "ui_chncfgdialog.h"
 #include <QMessageBox>
+#include <QDesktopWidget>
 
 static void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
@@ -38,6 +39,10 @@ ChnCfgDialog::ChnCfgDialog(QWidget *parent) :
         this->ui->tableWidget->setVerticalHeaderItem(i,new QTableWidgetItem(QString().sprintf("高点摄像机%d",i+1)));
     for (i=0; i<IPC_CFG_NORMAL_CNT; i++)
         this->ui->tableWidget->setVerticalHeaderItem(IPC_CFG_STITCH_CNT+i,new QTableWidgetItem(QString().sprintf("低点摄像机%d",i+1)));
+
+    QDesktopWidget* desktop = QApplication::desktop();
+    move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
+
 }
 
 ChnCfgDialog::~ChnCfgDialog()

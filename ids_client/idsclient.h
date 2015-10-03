@@ -31,6 +31,8 @@ private slots:
 
     void on_pushButton_layoutcfg_clicked();
 
+    void on_pushButton_stitch_clicked();
+
 signals:
     void connect_network(int);
 private:

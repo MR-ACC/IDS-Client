@@ -44,8 +44,6 @@ private slots:
 
     void on_comboBoxLayoutList_currentIndexChanged(int index);
 
-    void on_btnClose_clicked();
-
     void on_comboBoxCameraType_currentIndexChanged(int index);
 
     void on_btnDel_clicked();

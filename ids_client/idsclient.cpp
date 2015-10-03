@@ -5,9 +5,10 @@
 #include "../common/netcfgdialog.h"
 #include "../common/layoutcfgdialog.h"
 #include "upgradedialog.h"
+#include "stitchdialog.h"
 #include <QDebug>
 #include <QMessageBox>
-
+#include <QDesktopWidget>
 #define SERVER_PORT 1702
 
 void ids_io_fin_cb(gpointer priv)
@@ -24,7 +25,7 @@ idsclient::idsclient(QWidget *parent) :
     ui(new Ui::idsclient)
 {
     ui->setupUi(this);
-
+QApplication::setFont(QFont("Times New Roman",14));
     if (TRUE != ids_core_init())
         throw QString("init core library failed");
 
@@ -34,6 +35,16 @@ idsclient::idsclient(QWidget *parent) :
     mIdsEndpoint = NULL;
 
     connect(this, SIGNAL(connect_network(int)), this, SLOT(connect_server(int)));
+
+    QDesktopWidget* desktop = QApplication::desktop();
+    move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
+
+    this->ui->pushButton_chncfg->setEnabled(false);
+    this->ui->pushButton_dispcfg->setEnabled(false);
+    this->ui->pushButton_layoutcfg->setEnabled(false);
+    this->ui->pushButton_netcfg->setEnabled(false);
+    this->ui->pushButton_stitch->setEnabled(false);
+    this->ui->pushButton_upgrade->setEnabled(false);
 }
 
 idsclient::~idsclient()
@@ -47,8 +58,8 @@ void idsclient::connect_server(int prompt_first)
 {
     if (prompt_first)
     {
-        QMessageBox::StandardButton rb = QMessageBox::question(NULL, "Tips"
-                           , "Currently the network is disconnected, connect it now?"
+        QMessageBox::StandardButton rb = QMessageBox::question(NULL, tr("提示")
+                           , "网络断开，是否重新连接？"
                            , QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
         if(rb != QMessageBox::Yes)
             return ;
@@ -62,9 +73,17 @@ void idsclient::connect_server(int prompt_first)
 
     mIdsEndpoint = ids_create_remote_endpoint(mIp, SERVER_PORT, ids_io_fin_cb, this, NULL);
     if (NULL == mIdsEndpoint)
-        QMessageBox::critical(NULL, "Error", QString().sprintf("connect to server(%s) failed.", mIp));
+        QMessageBox::critical(NULL, tr("错误"), QString().sprintf("连接服务器(%s)失败.", mIp));
     else
-        QMessageBox::information(NULL, "tips", QString().sprintf("connect to server(%s) succeed.", mIp));
+    {
+        this->ui->pushButton_chncfg->setEnabled(true);
+        this->ui->pushButton_dispcfg->setEnabled(true);
+        this->ui->pushButton_layoutcfg->setEnabled(true);
+        this->ui->pushButton_netcfg->setEnabled(true);
+        this->ui->pushButton_stitch->setEnabled(true);
+        this->ui->pushButton_upgrade->setEnabled(true);
+        QMessageBox::information(NULL, tr("提示"), QString().sprintf("连接服务器(%s)成功.", mIp));
+    }
 }
 
 void idsclient::on_pushButton_connect_clicked()
@@ -78,19 +97,17 @@ void idsclient::on_pushButton_connect_clicked()
 
 void idsclient::on_pushButton_chncfg_clicked()
 {
-    int ret;
-    ChnCfgDialog chnCfg;
-    chnCfg.setGeometry(200, 200, 640, 480);
-
     if (mIdsEndpoint == NULL)
     {
-        QMessageBox::information(NULL, "tips", "please connect first.");
+        QMessageBox::information(NULL, tr("提示"), tr("请先连接服务器！"));
         return ;
     }
+    int ret;
+    ChnCfgDialog chnCfg;
     ret = chnCfg.idsUpdate(mIdsEndpoint);
     if (!ret)
     {
-        QMessageBox::critical(NULL, "Error", "get channel info failed!");
+        QMessageBox::critical(NULL, tr("错误"), "获取通道信息失败!");
         return ;
     }
     chnCfg.exec();
@@ -98,18 +115,20 @@ void idsclient::on_pushButton_chncfg_clicked()
 
 void idsclient::on_pushButton_dispcfg_clicked()
 {
+    if (mIdsEndpoint == NULL)
+    {
+        QMessageBox::information(NULL, tr("提示"), tr("请先连接服务器！"));
+        return ;
+    }
+
     int ret;
     displayCfgDialog dispCfg;
 
-    if (mIdsEndpoint == NULL)
-    {
-        QMessageBox::information(NULL, "tips", "please connect first.");
-        return ;
-    }
+
     ret = dispCfg.idsUpdate(mIdsEndpoint);
     if (!ret)
     {
-        QMessageBox::critical(NULL, "Error", "get display mode info failed!");
+        QMessageBox::critical(NULL, tr("错误"), "获取显示模式失败！");
         return ;
     }
     dispCfg.exec();
@@ -117,18 +136,17 @@ void idsclient::on_pushButton_dispcfg_clicked()
 
 void idsclient::on_pushButton_netcfg_clicked()
 {
-    int ret;
-    NetCfgDialog netCfg;
-
     if (mIdsEndpoint == NULL)
     {
-        QMessageBox::information(NULL, "tips", "please connect first.");
+        QMessageBox::information(NULL, tr("提示"), tr("请先连接服务器！"));
         return ;
     }
+    int ret;
+    NetCfgDialog netCfg;
     ret = netCfg.idsUpdate(mIdsEndpoint);
     if (!ret)
     {
-        QMessageBox::critical(NULL, "Error", "get network info failed!");
+        QMessageBox::critical(NULL, tr("错误"), "获取网络信息失败！");
         return ;
     }
 
@@ -137,17 +155,17 @@ void idsclient::on_pushButton_netcfg_clicked()
 
 void idsclient::on_pushButton_layoutcfg_clicked()
 {
-    int ret;
-    layoutCfgDialog layoutDialog;
     if (mIdsEndpoint == NULL)
     {
-        QMessageBox::information(NULL, "tips", "please connect first.");
+        QMessageBox::information(NULL, tr("提示"), tr("请先连接服务器！"));
         return ;
     }
+    int ret;
+    layoutCfgDialog layoutDialog;
     ret = layoutDialog.idsUpdate(mIdsEndpoint);
     if (!ret)
     {
-        QMessageBox::critical(NULL, "Error", "get layout info failed!");
+        QMessageBox::critical(NULL, tr("错误"), "获取布局信息失败！");
         return ;
     }
 
@@ -160,3 +178,21 @@ void idsclient::on_pushButton_upgrade_clicked()
     upgradeDialog.exec();
 }
 
+
+void idsclient::on_pushButton_stitch_clicked()
+{
+    if (mIdsEndpoint == NULL)
+    {
+        QMessageBox::information(NULL, tr("提示"), tr("请先连接服务器！"));
+        return ;
+    }
+    int ret;
+    stitchDialog stitchdlg;
+    ret = stitchdlg.idsUpdate(mIdsEndpoint);
+    if (!ret)
+    {
+        QMessageBox::critical(NULL, tr("错误"), "失败！");
+        return ;
+    }
+    stitchdlg.exec();
+}
