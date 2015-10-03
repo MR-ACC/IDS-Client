@@ -16,13 +16,14 @@ static int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
     if (pev->info.ptr == NULL)
     {
         ((idsServer *)priv)->mDispmodePreviewFlag = FALSE;
-        emit ((idsServer *)priv)->idsPlayerHide();
+        emit ((idsServer *)priv)->idsPlayerShow();
     }
     else
     {
         ((idsServer *)priv)->mDispmodePreviewFlag = TRUE;
         ((idsServer *)priv)->mDispmodePreview = *((DisplayModeInfo *)pev->info.ptr);
-        emit ((idsServer *)priv)->idsPlayerShow();
+        emit ((idsServer *)priv)->idsPlayerHide();
+        ((idsServer *)priv)->update();
     }
     return EHR_ACCEPT;
 }
@@ -101,7 +102,8 @@ idsServer::idsServer(QWidget *parent) :
     for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
     {
         mPlayerList[i] = NULL;
-        mWidgetList[i] = NULL;
+        mWidgetList[i] = new VideoWidget(this);
+        mWidgetList[i]->hide();
     }
 
     mSceneId = -1;
@@ -166,12 +168,18 @@ idsServer::idsServer(QWidget *parent) :
         QMessageBox::critical(this, "error", QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet), QMessageBox::Yes, NULL);
 
     newSceneList();
-//    mSceneId = 0;                                                       //default play the first scene
-//    QTimer::singleShot(1000, this, SLOT(idsPlayerStartSlot()));
+    mSceneId = 0;                                                       //default play the first scene
+    QTimer::singleShot(1000, this, SLOT(idsPlayerStartSlot()));
 }
 
 idsServer::~idsServer()
 {
+    int i;
+    for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
+    {
+        mWidgetList[i]->close();
+        delete mWidgetList[i];
+    }
     delete mSceneGroup;
 //    delete mSceneSwitchMenu;
     delete mMainMenu;
@@ -193,13 +201,6 @@ void idsServer::closeEvent(QCloseEvent *)
 
 void idsServer::showEvent(QShowEvent *)
 {
-//    static int init = 0;
-//    if (init == 0)
-//    {
-//        init = 1;
-//        mSceneId = 0;                                                       //default play the first scene
-//        idsPlayerStartSlot();
-//    }
 }
 
 void idsServer::paintEvent(QPaintEvent*)
@@ -229,9 +230,6 @@ void idsServer::paintEvent(QPaintEvent*)
             painter.drawText(rect, Qt::AlignCenter, text);
             painter.drawRect(rect);
         }
-    }
-    else
-    {
     }
 }
 
@@ -282,8 +280,9 @@ void idsServer::idsPlayerStartSlot(void)
     mWinIdLink = -1;
 
     for (i=0; i<mWinNum; i++)
-   {
-        mWidgetList[i] = new VideoWidget(this);
+    {
+        qDebug() <<"win:"<<i<<"winid:"<<mWidgetList[i]->winId(); //hack tech!!!! do not delete me!!!!
+
         mWidgetList[i]->setGeometry( winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W,
                                                             winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H,
                                                             winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W,
@@ -291,7 +290,10 @@ void idsServer::idsPlayerStartSlot(void)
         mWidgetList[i]->mStatusText = QString("连接中...");
         mWidgetList[i]->show();
         mWidgetList[i]->repaint();
+    }
 
+    for (i=0; i<mWinNum; i++)
+    {
         mPlayThread[i].mPriv = (void *)this;
         mPlayThread[i].mPlayerid = i;
         mPlayThread[i].start();
@@ -302,6 +304,7 @@ void idsServer::idsPlayerStartSlot(void)
 void idsServer::idsPlayerStartOneSlot(int i)
 {
     mPlayMutex[i].lock();
+    qDebug()<<__func__<< i << "lock.";
     mPlayerList[i] = NULL;
 
     WindowInfo winfo[IPC_CFG_STITCH_CNT];
@@ -383,8 +386,8 @@ void idsServer::idsPlayerStartOneSlot(int i)
             }
         }
     } //else
-    qDebug() << __func__ << "play: " << i << ". ret: " << ret << ". status: " << mWidgetList[i]->mStatusText;
     mWidgetList[i]->update(); // can not call repaint in a thread??
+    qDebug()<<__func__<< i << "unlock." << "ret: " << ret << "status: "<<mWidgetList[i]->mStatusText ;
     mPlayMutex[i].unlock();
 }
 
@@ -392,22 +395,19 @@ void idsServer::idsPlayerStopSlot(void)
 {
     mMutex.lock();
     int i;
-
     for (i=0; i<mWinNum; i++)
     {
         mPlayMutex[i].lock();
+
+        mWidgetList[i]->stopRender();
+        mWidgetList[i]->hide();
+
         if (mPlayerList[i] != NULL)
         {
-            mWidgetList[i]->stopRender();
             ids_stop_stream(mPlayerList[i]);
             mPlayerList[i] = NULL;
         }
-        if (mWidgetList[i] != NULL)
-        {
-            mWidgetList[i]->close();
-            delete mWidgetList[i];
-            mWidgetList[i] = NULL;
-        }
+
         mPlayMutex[i].unlock();
     }
     mWinNum = 0;
@@ -436,8 +436,8 @@ void idsServer::sceneSwitchSlot(void)
 {
     if (mSceneId != mSceneGroup->checkedAction()->whatsThis().toInt())
     {
-        mSceneId = mSceneGroup->checkedAction()->whatsThis().toInt();
         idsPlayerStopSlot();
+        mSceneId = mSceneGroup->checkedAction()->whatsThis().toInt();
         idsPlayerStartSlot();
     }
 }
