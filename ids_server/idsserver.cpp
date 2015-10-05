@@ -170,8 +170,8 @@ idsServer::idsServer(QWidget *parent) :
     newSceneList();
     if (mSceneNum > 0)
     {
-        mSceneId = 0;                                                       //default play the first scene
-        QTimer::singleShot(1000, this, SLOT(idsPlayerStartSlot()));
+//        mSceneId = 0;                                                       //default play the first scene
+//        QTimer::singleShot(1000, this, SLOT(idsPlayerStartSlot()));
     }
 }
 
@@ -320,13 +320,22 @@ void idsServer::idsPlayerStartOneSlot(int i)
             winfo[j].win_w = this->mWidgetList[i]->width();
             winfo[j].win_h = this->mWidgetList[i]->height();
             winfo[j].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
-#ifdef IDS_SERVER_RENDER_OPENGL
-            winfo[j].flags = IDS_USE_THE_SAME_WINDOW | IDS_ENABLE_ALGO_GL_HWACCEL;
-            winfo[j].draw = glvideowidget_render_frame_cb;
-            winfo[j].priv = this->mWidgetList[i];
-#else
             winfo[j].flags = IDS_USE_THE_SAME_WINDOW;
-            winfo[j].draw = NULL;
+ #ifdef IDS_SERVER_RENDER_SDL
+            winfo[j].priv = 0;
+            winfo[j].draw = 0;
+#elif defined IDS_SERVER_RENDER_USER
+            winfo[j].priv = this->mWidgetList[i];
+            winfo[j].draw = videowidget_render_frame_cb;
+            winfo[j].draw_fmt = IDS_FMT_YUVRGB32;
+#elif defined IDS_SERVER_RENDER_OPENGL
+            winfo[j].priv = this->mWidgetList[i];
+            winfo[j].draw = videowidget_render_frame_cb;
+    #if (HAVE_IDS_CV == 1)
+            winfo[j].flags |= IDS_ENABLE_FILTER_CV_ACCEL;
+    #elif (HAVE_IDS_CV_CUDA == 1)
+            winfo[j].flags |= IDS_ENABLE_FILTER_CV_CUDA_ACCEL;
+    #endif
 #endif
         }
         if (j == 0)
@@ -367,13 +376,22 @@ void idsServer::idsPlayerStartOneSlot(int i)
             winfo[0].win_w = this->mWidgetList[i]->width();
             winfo[0].win_h = this->mWidgetList[i]->height();
             winfo[0].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
-#ifdef IDS_SERVER_RENDER_OPENGL
-            winfo[0].flags = IDS_ENABLE_ALGO_GL_HWACCEL;
-            winfo[0].draw = glvideowidget_render_frame_cb;
-            winfo[0].priv = this->mWidgetList[i];
-#else
             winfo[0].flags = 0;
-            winfo[0].draw = NULL;
+#ifdef IDS_SERVER_RENDER_SDL
+            winfo[0].priv = 0;
+            winfo[0].draw = 0;
+#elif defined IDS_SERVER_RENDER_USER
+            winfo[0].priv = this->mWidgetList[i];
+            winfo[0].draw = videowidget_render_frame_cb;
+            winfo[0].draw_fmt = IDS_FMT_YUVRGB32;
+#elif defined IDS_SERVER_RENDER_OPENGL
+            winfo[0].priv = this->mWidgetList[i];
+            winfo[0].draw = videowidget_render_frame_cb;
+    #if (HAVE_IDS_CV == 1)
+            winfo[0].flags |= IDS_ENABLE_FILTER_CV_ACCEL;
+    #elif (HAVE_IDS_CV_CUDA == 1)
+            winfo[0].flags |= IDS_ENABLE_FILTER_CV_CUDA_ACCEL;
+    #endif
 #endif
             ret = ids_play_stream(&winfo[0], 1, 0, NULL, this, &mPlayerList[i]);
             if (0 != ret)
