@@ -2,10 +2,10 @@
 #define VIDEOWIDGET_H
 
 //#define IDS_SERVER_RENDER_OPENGL
-#define IDS_SERVER_RENDER_SDL
-//#define IDS_SERVER_RENDER_USER
+//#define IDS_SERVER_RENDER_SDL
+#define IDS_SERVER_RENDER_USER
 
-#define TIME_PER_FRAME 100
+#define TIME_PER_FRAME 30
 
 #include "ids.h"
 
@@ -14,6 +14,7 @@
 #include <QDebug>
 #include <QApplication>
 #include <QWidget>
+#include <QPixmap>
 
 #ifdef IDS_SERVER_RENDER_OPENGL
     #include "opencv2/opencv_modules.hpp"
@@ -43,21 +44,21 @@ class VideoWidget : public QWidget {
 #endif
 
     Q_OBJECT // must include this if you use Qt signals/slots
-
 public:
     VideoWidget(QWidget *parent = NULL);
+    ~VideoWidget();
     void    stopRender();
-
     QString           mStatusText;
-    ImageInfo      *mImgInfo;
-    bool                mUpdateFlag;
-
 protected:
     void paintEvent(QPaintEvent* event);
 
 #ifndef IDS_SERVER_RENDER_SDL
+public:
+    ImageInfo*    mImgInfoClone;
+    bool                mUpdateFlag;
+    QMutex          mMutex;
 private:
-    QTimer *            mTimer;
+    QTimer*         mTimer;
 private slots:
     void renderOneFrame();
 #endif
