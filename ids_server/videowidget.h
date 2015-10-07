@@ -1,9 +1,10 @@
 #ifndef VIDEOWIDGET_H
 #define VIDEOWIDGET_H
 
-//#define IDS_SERVER_RENDER_OPENGL
+#define IDS_SERVER_RENDER_OPENGL
 //#define IDS_SERVER_RENDER_SDL
-#define IDS_SERVER_RENDER_USER
+//#define IDS_SERVER_RENDER_USER
+//#define IDS_SERVER_RENDER_OPENGL_CUDA
 
 #define TIME_PER_FRAME 30
 
@@ -20,17 +21,10 @@
     #include "opencv2/opencv_modules.hpp"
     #include <opencv2/core.hpp>
     #include <opencv2/core/opengl.hpp>
-    #include <opencv2/cudacodec.hpp>
-    #include <opencv2/highgui.hpp>
-    #include <opencv2/imgproc.hpp>
-    #include <opencv2/cudaarithm.hpp>
-    #include <opencv2/cudawarping.hpp>
     using namespace cv;
-    using namespace cuda;
     #include <QtOpenGL/QGLWidget>
     #include "GL/gl.h"
     #include "GL/glu.h"
-    #include "GL/glut.h"
 #endif
 
 #ifndef IDS_SERVER_RENDER_SDL
@@ -47,7 +41,7 @@ class VideoWidget : public QWidget {
 public:
     VideoWidget(QWidget *parent = NULL);
     ~VideoWidget();
-    void    stopRender();
+    void stopRender();
     QString           mStatusText;
 protected:
     void paintEvent(QPaintEvent* event);

@@ -331,11 +331,14 @@ void idsServer::idsPlayerStartOneSlot(int i)
 #elif defined IDS_SERVER_RENDER_OPENGL
             winfo[j].priv = this->mWidgetList[i];
             winfo[j].draw = videowidget_render_frame_cb;
-    #if (HAVE_IDS_CV == 1)
+            winfo[j].draw_fmt = IDS_FMT_RGB24;
+            winfo[j].flags |= IDS_RENDER_USE_HWACCEL_RENDER;
+    #ifndef HAVE_IDS_CV_CUDA
             winfo[j].flags |= IDS_ENABLE_FILTER_CV_ACCEL;
-    #elif (HAVE_IDS_CV_CUDA == 1)
+    #else
             winfo[j].flags |= IDS_ENABLE_FILTER_CV_CUDA_ACCEL;
     #endif
+
 #endif
         }
         if (j == 0)
@@ -387,9 +390,11 @@ void idsServer::idsPlayerStartOneSlot(int i)
 #elif defined IDS_SERVER_RENDER_OPENGL
             winfo[0].priv = this->mWidgetList[i];
             winfo[0].draw = videowidget_render_frame_cb;
-    #if (HAVE_IDS_CV == 1)
+            winfo[0].draw_fmt = IDS_FMT_RGB24;
+            winfo[0].flags |= IDS_RENDER_USE_HWACCEL_RENDER;
+    #ifndef HAVE_IDS_CV_CUDA
             winfo[0].flags |= IDS_ENABLE_FILTER_CV_ACCEL;
-    #elif (HAVE_IDS_CV_CUDA == 1)
+    #else
             winfo[0].flags |= IDS_ENABLE_FILTER_CV_CUDA_ACCEL;
     #endif
 #endif
