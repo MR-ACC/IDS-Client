@@ -100,10 +100,7 @@ idsServer::idsServer(QWidget *parent) :
     int i;
     mWinNum = 0;
     for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
-    {
-        mPlayerList[i] = NULL;
         mWidgetList[i] = NULL;
-    }
 
     mSceneId = -1;
     mSceneNum = 0;
@@ -280,17 +277,11 @@ void idsServer::idsPlayerStartSlot(void)
     for (i=0; i<mWinNum; i++)
     {
         mWidgetList[i] = new VideoWidget(this);
-
-        qDebug() <<"win:"<<i<<"winid:"<<mWidgetList[i]->winId(); //hack tech!!!! do not delete me!!!!
-        qDebug() <<"win:"<<i<<"winid:"<<mWidgetList[i]->winId(); //hack tech!!!! do not delete me!!!!
-
         mWidgetList[i]->setGeometry(winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W,
                                     winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H,
                                     winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W,
                                     winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
-        mWidgetList[i]->mStatusText = QString("连接中...");
         mWidgetList[i]->show();
-        mWidgetList[i]->update();
 
         mPlayThread[i].mPriv = (void *)this;
         mPlayThread[i].mPlayerid = i;
@@ -299,11 +290,41 @@ void idsServer::idsPlayerStartSlot(void)
     mMutex.unlock();
 }
 
-void idsServer::idsPlayerStartOneSlot(int i)
+void idsServer::idsPlayerStartOneSlot(int winId)
 {
-    mPlayMutex[i].lock();
-    qDebug()<<__func__<< i << "lock.";
+    mPlayMutex[winId].lock();
 
+    int vid;
+    gchar *urls[IPC_CFG_STITCH_CNT] = {0};
+    vid = mLayoutAll.layout[mSceneId].win[winId].vid;
+    if (vid == 0) // stitch
+    {
+        mWinIdStitch = winId;
+        int i;
+        for (i=0; i<IPC_CFG_STITCH_CNT; i++)
+        {
+            if (0 == mIpcCfgAll.ipc_sti[i].url[0])
+                break;
+            urls[i] = mIpcCfgAll.ipc_sti[i].url;
+        }
+        mWidgetList[winId]->startPlay(urls, i);
+    } //if (vid == 0) // stitch
+    else if (vid == 1) //link
+    {
+        mWinIdLink = winId;
+    } //else if (vid == 1) //link
+    else
+    {
+        Q_ASSERT(vid < 2+IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT);
+        if (vid < 2+IPC_CFG_STITCH_CNT)
+            urls[0] = mIpcCfgAll.ipc_sti[vid-2].url;
+        else
+            urls[0] = mIpcCfgAll.ipc[vid-2-IPC_CFG_STITCH_CNT].url;
+        mWidgetList[winId]->startPlay(urls[0]);
+    } //else
+    mWidgetList[winId]->update(); // can not call repaint in a thread??
+    mPlayMutex[winId].unlock();
+    /*
     mPlayerList[i] = NULL;
 
     WindowInfo winfo[IPC_CFG_STITCH_CNT];
@@ -320,25 +341,23 @@ void idsServer::idsPlayerStartOneSlot(int i)
             winfo[j].win_w = this->mWidgetList[i]->width();
             winfo[j].win_h = this->mWidgetList[i]->height();
             winfo[j].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
+            winfo[j].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
             winfo[j].flags = IDS_USE_THE_SAME_WINDOW;
- #ifdef IDS_SERVER_RENDER_SDL
-            winfo[j].priv = 0;
-            winfo[j].draw = 0;
-#elif defined IDS_SERVER_RENDER_USER
-            winfo[j].priv = this->mWidgetList[i];
+#ifdef VIDEOWIDGET_RENDER_OPENCV
             winfo[j].draw = videowidget_render_frame_cb;
-            winfo[j].draw_fmt = IDS_FMT_YUVRGB32;
-#elif defined IDS_SERVER_RENDER_OPENGL
             winfo[j].priv = this->mWidgetList[i];
-            winfo[j].draw = videowidget_render_frame_cb;
-            winfo[j].draw_fmt = IDS_FMT_RGB24;
-            winfo[j].flags |= IDS_RENDER_USE_HWACCEL_RENDER;
-    #ifndef HAVE_IDS_CV_CUDA
-            winfo[j].flags |= IDS_ENABLE_FILTER_CV_ACCEL;
+//            winfo[j].draw_fmt = IDS_FMT_RGB24;
+    #ifndef VIDEOWIDGET_RENDER_OPENCV_CUDA
+            winfo[j].flags |= IDS_ENABLE_CV_ACCEL;
     #else
-            winfo[j].flags |= IDS_ENABLE_FILTER_CV_CUDA_ACCEL;
+            winfo[j].flags |= IDS_ENABLE_CV_CUDA_ACCEL;
     #endif
-
+#elif defined(VIDEOWIDGET_RENDER_RGB32)
+            winfo[j].draw = videowidget_render_frame_cb;
+            winfo[j].priv = this->mWidgetList[i];
+            winfo[j].draw_fmt = IDS_FMT_RGB32;
+#elif defined(VIDEOWIDGET_RENDER_SDL)
+            winfo[j].draw = 0;
 #endif
         }
         if (j == 0)
@@ -379,25 +398,22 @@ void idsServer::idsPlayerStartOneSlot(int i)
             winfo[0].win_w = this->mWidgetList[i]->width();
             winfo[0].win_h = this->mWidgetList[i]->height();
             winfo[0].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
+            winfo[0].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
             winfo[0].flags = 0;
-#ifdef IDS_SERVER_RENDER_SDL
-            winfo[0].priv = 0;
-            winfo[0].draw = 0;
-#elif defined IDS_SERVER_RENDER_USER
-            winfo[0].priv = this->mWidgetList[i];
+
+#ifdef VIDEOWIDGET_RENDER_OPENCV
             winfo[0].draw = videowidget_render_frame_cb;
-            winfo[0].draw_fmt = IDS_FMT_YUVRGB32;
-#elif defined IDS_SERVER_RENDER_OPENGL
             winfo[0].priv = this->mWidgetList[i];
-            winfo[0].draw = videowidget_render_frame_cb;
             winfo[0].draw_fmt = IDS_FMT_RGB24;
-            winfo[0].flags |= IDS_RENDER_USE_HWACCEL_RENDER;
-    #ifndef HAVE_IDS_CV_CUDA
-            winfo[0].flags |= IDS_ENABLE_FILTER_CV_ACCEL;
-    #else
-            winfo[0].flags |= IDS_ENABLE_FILTER_CV_CUDA_ACCEL;
-    #endif
+//            winfo[0].flags |= IDS_ENABLE_CV_ACCEL;
+#elif defined(VIDEOWIDGET_RENDER_RGB32)
+            winfo[0].draw = videowidget_render_frame_cb;
+            winfo[0].priv = this->mWidgetList[i];
+            winfo[0].draw_fmt = IDS_FMT_RGB32;
+#elif defined(VIDEOWIDGET_RENDER_SDL)
+            winfo[0].draw = 0;
 #endif
+
             ret = ids_play_stream(&winfo[0], 1, 0, NULL, this, &mPlayerList[i]);
             if (0 != ret)
                 mWidgetList[i]->mStatusText = QString("");
@@ -409,10 +425,7 @@ void idsServer::idsPlayerStartOneSlot(int i)
         }
     } //else
     mWidgetList[i]->update(); // can not call repaint in a thread??
-    if (ret > 0)
-//        mWidgetList[i]->startRender();
-    qDebug()<<__func__<< i << "unlock." << "ret: " << ret << "status: "<<mWidgetList[i]->mStatusText ;
-    mPlayMutex[i].unlock();
+    */
 }
 
 void idsServer::idsPlayerStopSlot(void)
@@ -424,12 +437,7 @@ void idsServer::idsPlayerStopSlot(void)
         mPlayMutex[i].lock();
 
         Q_ASSERT(mWidgetList[i] != NULL);
-        mWidgetList[i]->stopRender();
-        if (mPlayerList[i] != NULL)
-        {
-            ids_stop_stream(mPlayerList[i]);
-            mPlayerList[i] = NULL;
-        }
+        mWidgetList[i]->stopPlay();
         mWidgetList[i]->close();
         delete mWidgetList[i];
 

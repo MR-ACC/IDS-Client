@@ -1,43 +1,47 @@
 #include "videowidget.h"
 
-#ifndef IDS_SERVER_RENDER_SDL
 void videowidget_render_frame_cb(gpointer priv, ImageInfo *piinfo)
 {
     VideoWidget *window = (VideoWidget *)priv;
 
     if (false == window->mMutex.tryLock())
         return;
+
     window->mUpdateFlag = true;
-#ifdef IDS_SERVER_RENDER_USER
-    if (window->mImgInfoClone == NULL)
+    window->mImgInfoClone.img_flag = piinfo->img_flag;
+
+    if (piinfo->img_flag == CV_IMG_TYPE_DEFAULT)
     {
-        window->mImgInfoClone = new ImageInfo;
-        window->mImgInfoClone->fmt = piinfo->fmt;
-        window->mImgInfoClone->width = piinfo->width;
-        window->mImgInfoClone->height = piinfo->height;
-        window->mImgInfoClone->linesize = piinfo->linesize;
-        window->mImgInfoClone->buf = (guchar *)malloc(window->mImgInfoClone->linesize * window->mImgInfoClone->height);
+        window->mImgInfoClone.fmt = piinfo->fmt;
+        window->mImgInfoClone.width = piinfo->width;
+        window->mImgInfoClone.height = piinfo->height;
+        window->mImgInfoClone.linesize = piinfo->linesize;
+        if (window->mImgInfoClone.buf == NULL)
+            window->mImgInfoClone.buf = (unsigned char *)malloc(window->mImgInfoClone.linesize * window->mImgInfoClone.height);
+        memcpy(window->mImgInfoClone.buf, piinfo->buf, window->mImgInfoClone.linesize * window->mImgInfoClone.height);
     }
-    memcpy(window->mImgInfoClone->buf, piinfo->buf, window->mImgInfoClone->linesize * window->mImgInfoClone->height);
-#elif defined IDS_SERVER_RENDER_OPENGL
-    if (window->mImgInfoClone == NULL)
+    else if (piinfo->img_flag == CV_IMG_TYPE_OPENCV_CPU)
     {
-        window->mImgInfoClone = new ImageInfo;
-        window->mImgInfoClone->cv_img = new Mat(piinfo->height, piinfo->width, CV_8UC3);
+        qDebug () << __func__ << __LINE__ << "error. bad use (old version). do not use CV_IMG_TYPE_OPENCV_CPU img_flag.";
+        Q_ASSERT(0);
     }
-    if (piinfo->cv_img_flag == CV_IMG_TYPE_OPENCV_CPU)
-        ((Mat *)piinfo->cv_img)->copyTo(*(Mat *)(window->mImgInfoClone->cv_img));
-#ifdef IDS_SERVER_RENDER_OPENGL_CUDA
-    else
-        window->mImgInfoClone->cv_img = piinfo->cv_img;
+    else if (piinfo->img_flag == CV_IMG_TYPE_OPENCV_CUDA_GPU)
+    {
+#ifdef HAVE_OPENCV_CUDA
+//        if (window->mImgInfoClone.cv_img == NULL)
+//            window->mImgInfoClone.cv_img = (gpointer)new GpuMat(((GpuMat *)piinfo->cv_img)->size(), CV_8UC3);
+//        ((GpuMat *)piinfo->cv_img)->copyTo(*(GpuMat *)(window->mImgInfoClone.cv_img));
+        window->mImgInfoClone.cv_img = piinfo->cv_img;
+#else
+        qDebug () << __func__ << __LINE__ << "VIDEOWIDGET is compiled without opencv cuda support.";
+        Q_ASSERT(0);
 #endif
-    window->mImgInfoClone->cv_img_flag = piinfo->cv_img_flag;
-#endif
+    }
+
     window->mMutex.unlock();
 }
-#endif
 
-#ifdef IDS_SERVER_RENDER_OPENGL
+#ifdef HAVE_OPENCV_OPENGL
 VideoWidget::VideoWidget(QWidget *parent) :
     QGLWidget(parent)
 #else
@@ -51,30 +55,115 @@ VideoWidget::VideoWidget(QWidget *parent) :
     this->setPalette(palette);
     this->setAutoFillBackground(true);
 
-    mStatusText = "        ";//blank
+    mPlayer = NULL;
+    mStatusText = QString("");
 
-#ifndef IDS_SERVER_RENDER_SDL
     mUpdateFlag = false;
-    mImgInfoClone = NULL;
-    mTimer = new QTimer(this);
-    connect(mTimer, SIGNAL(timeout()), this, SLOT(renderOneFrame()));
-    mTimer->start(TIME_PER_FRAME); //fixme
+    mImgInfoClone.buf = NULL;
+    mImgInfoClone.cv_img = NULL;
+    connect(&mTimer, SIGNAL(timeout()), this, SLOT(renderOneFrame()));
+    mTimer.start(TIME_PER_FRAME);
+
+#ifdef HAVE_OPENCV_OPENGL
+    m_OglTexValid = false;
 #endif
 }
 
 VideoWidget::~VideoWidget()
 {
-#ifndef IDS_SERVER_RENDER_SDL
-    if (mImgInfoClone != NULL)
-        delete mImgInfoClone;
-#endif
 }
 
-void VideoWidget::stopRender()
+void VideoWidget::startPlay(gchar *rtsp_url)
 {
-#ifndef IDS_SERVER_RENDER_SDL
-    mTimer->stop();
+    gchar *rtsp_urls[] = {rtsp_url};
+    startPlay(rtsp_urls, 1);
+}
+
+void VideoWidget::startPlay(gchar *rtsp_urls[], gint nums)
+{
+    gint i;
+    gint win_flags, player_flags, draw_fmt;
+    for (i=0; i<nums; i++)
+     if (rtsp_urls[i] == NULL || rtsp_urls[i][0] == 0)
+         break;
+    nums = i;
+    if (nums == 1)
+    {
+        player_flags = 0;
+        win_flags = 0;
+    }
+    else
+    {
+        player_flags = IDS_TYPE(IDS_TYPE_STITCH);
+        win_flags = IDS_USE_THE_SAME_WINDOW;
+    #ifdef HAVE_OPENCV_CUDA
+        win_flags |= IDS_ENABLE_CV_CUDA_ACCEL;
+    #endif
+    }
+#ifdef HAVE_OPENCV_OPENGL
+    draw_fmt = IDS_FMT_RGB24;
+#else
+    draw_fmt = IDS_FMT_RGB32; //fixme, YUV420 should be ok too.
 #endif
+
+    startPlayExperts(rtsp_urls, nums, win_flags, player_flags, draw_fmt);
+}
+
+void VideoWidget::startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags, gint player_flags, gint draw_fmt)
+{
+    Q_ASSERT(mPlayer == NULL);
+    if (nums < 1)
+        mStatusText = "路径无效";
+    else
+    {
+        int i;
+        WindowInfo winfo[IPC_CFG_STITCH_CNT];
+        for (i=0; i<nums; i++)
+        {
+            winfo[i].media_url = rtsp_urls[i];
+            winfo[i].win_w = width();
+            winfo[i].win_h = height();
+            winfo[i].win_id = GUINT_TO_POINTER(winId());
+            winfo[i].win_id = GUINT_TO_POINTER(winId()); //hack.... do not delete me!!!
+            winfo[i].win_id = GUINT_TO_POINTER(winId()); //hack.... do not delete me!!!
+            winfo[i].flags = win_flags;
+            winfo[i].draw_fmt = draw_fmt;
+            if (draw_fmt == IDS_FMT_YUV420P)
+            {
+                winfo[i].draw = 0;
+                winfo[i].priv = 0;
+            }
+            else
+            {
+                winfo[i].draw = videowidget_render_frame_cb;
+                winfo[i].priv = this;
+            }
+        }
+
+        int ret = ids_play_stream(&winfo[0], nums, player_flags, NULL, this, &mPlayer);
+        if (ret <= 0)
+        {
+            mStatusText = QString("连接失败");
+            for (i=0; i<nums; i++)
+            {
+                mStatusText += QString("\n");
+                mStatusText += QString(rtsp_urls[i]);
+            }
+        }
+    }
+
+    this->update();
+}
+
+void VideoWidget::stopPlay()
+{
+    if (mTimer.isActive()) //fixme
+        mTimer.stop();
+    if (mPlayer != NULL)
+    {
+        ids_stop_stream(mPlayer);
+        mPlayer = NULL;
+    }
 }
 
 void VideoWidget::paintEvent(QPaintEvent* event)
@@ -84,62 +173,81 @@ void VideoWidget::paintEvent(QPaintEvent* event)
     font.setPixelSize(20);
     painter.setFont(font);
     QRect rect;
-//        rect = QRect(1, 1, width()-2, height()-2);
     rect = QRect(0, 0, width(), height());
     painter.setPen(QColor(10,10,10));
     painter.drawRect(rect);
     painter.setPen(QColor(180,180,180));
     painter.drawText(rect, Qt::AlignCenter, mStatusText);
 
-#ifdef IDS_SERVER_RENDER_USER
-    if (mImgInfoClone != NULL && mImgInfoClone->buf  != NULL)
+#ifndef HAVE_OPENCV_OPENGL
+    if (mImgInfoClone.buf != NULL && mImgInfoClone.img_flag == CV_IMG_TYPE_DEFAULT)
     {
-        QImage image = QImage((const unsigned char*)mImgInfoClone->buf,
-                             mImgInfoClone->width, mImgInfoClone->height, mImgInfoClone->linesize, QImage::Format_RGB32); //mImgInfoClone->fmt
+        QImage image;
+        if (mImgInfoClone.fmt == IDS_FMT_RGB32)
+            image = QImage((const unsigned char*)mImgInfoClone.buf,
+                                  mImgInfoClone.width, mImgInfoClone.height, mImgInfoClone.linesize, QImage::Format_RGB32); //mImgInfoClone.fmt
+        else if (mImgInfoClone.fmt == IDS_FMT_RGB24)
+            image = QImage((const unsigned char*)mImgInfoClone.buf,
+                                  mImgInfoClone.width, mImgInfoClone.height, mImgInfoClone.linesize, QImage::Format_RGB888); //mImgInfoClone.fmt
+        else
+        {
+            qDebug() << __func__ << __LINE__ << "error. does not supprot img fmt: " << mImgInfoClone.fmt << endl;
+            return;
+        }
         QPixmap pixmap = QPixmap::fromImage( image.scaled(size(), Qt::KeepAspectRatio) );
         int w = width()-2;
         int h = height()-2;
-        double ratio = MIN((double)w/mImgInfoClone->width, (double)h/mImgInfoClone->height);
-        int dx = (w - ratio * mImgInfoClone->width) / 2;
-        int dy = (h - ratio * mImgInfoClone->height) / 2;
+        double ratio = MIN((double)w/mImgInfoClone.width, (double)h/mImgInfoClone.height);
+        int dx = (w - ratio * mImgInfoClone.width) / 2;
+        int dy = (h - ratio * mImgInfoClone.height) / 2;
         painter.drawPixmap(dx+1,dy+1, pixmap);
     }
 #endif
 }
 
-#ifndef IDS_SERVER_RENDER_SDL
 void VideoWidget::renderOneFrame()
 {
-//    if (mInitFlag == false)
-//    {
-//        mInitFlag = true;
-//        this->makeCurrent();
-//        this->updateGL();
-//        return;
-//    }
-
     if (false == mMutex.tryLock())
         return;
 
     if (mUpdateFlag)
     {
         mUpdateFlag = false;
-        //VideoWidget lock
-        Q_ASSERT(mImgInfoClone != NULL);
-#ifdef IDS_SERVER_RENDER_USER
-        repaint();
-#elif defined IDS_SERVER_RENDER_OPENGL
-        if (mImgInfoClone->cv_img_flag == CV_IMG_TYPE_OPENCV_CPU)
-            this->imshow(*(Mat *)(mImgInfoClone->cv_img));
-        else
-            this->imshow(*(cuda::GpuMat*)(mImgInfoClone->cv_img));
+        if (mImgInfoClone.img_flag == CV_IMG_TYPE_DEFAULT)
+        {
+#ifdef HAVE_OPENCV_OPENGL
+            if (mImgInfoClone.fmt == IDS_FMT_RGB24)
+                imshow(Mat(mImgInfoClone.height, mImgInfoClone.width, CV_8UC3, mImgInfoClone.buf, mImgInfoClone.linesize));
+            else if (mImgInfoClone.fmt == IDS_FMT_RGB32)
+                imshow(Mat(mImgInfoClone.height, mImgInfoClone.width, CV_8UC4, mImgInfoClone.buf, mImgInfoClone.linesize));
+            else
+            {
+                qDebug() << __func__ << __LINE__ << "error. does not support img fmt: " << mImgInfoClone.fmt << endl;
+                Q_ASSERT(0);
+            }
+#else
+            repaint();
 #endif
+        }
+        else if (mImgInfoClone.img_flag == CV_IMG_TYPE_OPENCV_CUDA_GPU)
+        {
+#ifdef HAVE_OPENCV_CUDA
+            this->imshow(*(GpuMat*)(mImgInfoClone.cv_img));
+#else
+            qDebug () << __func__ << __LINE__ << "VIDEOWIDGET is compiled without opencv cuda support.";
+            Q_ASSERT(0);
+#endif
+        }
+        else
+        {
+            qDebug () << __func__ << __LINE__ << "error. does not support img flag: " << mImgInfoClone.img_flag << endl;
+            Q_ASSERT(0);
+        }
     }
     mMutex.unlock();
 }
-#endif
 
-#ifdef IDS_SERVER_RENDER_OPENGL
+#ifdef HAVE_OPENCV_OPENGL
 void VideoWidget::imshow(InputArray _img)
 {
     this->makeCurrent();
@@ -157,6 +265,7 @@ void VideoWidget::imshow(InputArray _img)
         mOglTex.copyFrom(_img);
         mOglTex.setAutoRelease(false);
     }
+    m_OglTexValid = true;
 
     this->updateGL();
 }
@@ -171,7 +280,7 @@ void VideoWidget::resizeGL(int w, int h) {
 }
 
 void VideoWidget::paintGL() {
-    if (mImgInfoClone == NULL)
+    if (m_OglTexValid == false)
     {
         glClear(GL_COLOR_BUFFER_BIT);
     }
