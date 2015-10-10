@@ -71,6 +71,8 @@ VideoWidget::VideoWidget(QWidget *parent) :
 
 VideoWidget::~VideoWidget()
 {
+    if (mImgInfoClone.buf)
+        free(mImgInfoClone.buf);
 }
 
 void VideoWidget::startPlay(gchar *rtsp_url)
@@ -123,7 +125,7 @@ void VideoWidget::startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags
         {
             strcpy(urls[i], rtsp_urls[i]);
             winfo[i].media_url = urls[i];
-            winfo[i].win_w = width();
+            winfo[i].win_w = width()/16*16; //fixme.
             winfo[i].win_h = height();
             winfo[i].win_id = GUINT_TO_POINTER(winId());
             winfo[i].win_id = GUINT_TO_POINTER(winId()); //hack.... do not delete me!!!
@@ -143,8 +145,14 @@ void VideoWidget::startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags
         }
 
         int ret = ids_play_stream(&winfo[0], nums, player_flags, NULL, this, &mPlayer);
-        if (ret <= 0)
+        if (ret < nums)
         {
+            if (ret > 0) //ret > 0 but ret <nums means stitching failed, some of the urls is not actived.
+            {
+                Q_ASSERT(mPlayer != NULL);
+                ids_stop_stream(mPlayer);
+                mPlayer = NULL;
+            }
             mStatusText = QString("连接失败");
             for (i=0; i<nums; i++)
             {
@@ -221,11 +229,12 @@ void VideoWidget::renderOneFrame()
         mUpdateFlag = false;
         if (mImgInfoClone.img_flag == CV_IMG_TYPE_DEFAULT)
         {
+            Q_ASSERT(mImgInfoClone.fmt != IDS_FMT_YUV420P);
 #ifdef HAVE_OPENCV_OPENGL
             if (mImgInfoClone.fmt == IDS_FMT_RGB24)
-                imshow(Mat(mImgInfoClone.height, mImgInfoClone.width, CV_8UC3, mImgInfoClone.buf, mImgInfoClone.linesize));
+                showCvImg(Mat(mImgInfoClone.height, mImgInfoClone.width, CV_8UC3, mImgInfoClone.buf, mImgInfoClone.linesize));
             else if (mImgInfoClone.fmt == IDS_FMT_RGB32)
-                imshow(Mat(mImgInfoClone.height, mImgInfoClone.width, CV_8UC4, mImgInfoClone.buf, mImgInfoClone.linesize));
+                showCvImg(Mat(mImgInfoClone.height, mImgInfoClone.width, CV_8UC4, mImgInfoClone.buf, mImgInfoClone.linesize));
             else
             {
                 qDebug() << __func__ << __LINE__ << "error. does not support img fmt: " << mImgInfoClone.fmt << endl;
@@ -238,7 +247,7 @@ void VideoWidget::renderOneFrame()
         else if (mImgInfoClone.img_flag == CV_IMG_TYPE_OPENCV_CUDA_GPU)
         {
 #ifdef HAVE_OPENCV_CUDA
-            this->imshow(*(GpuMat*)(mImgInfoClone.cv_img));
+            this->showCvImg(*(GpuMat*)(mImgInfoClone.cv_img));
 #else
             qDebug () << __func__ << __LINE__ << "VIDEOWIDGET is compiled without opencv cuda support.";
             Q_ASSERT(0);
@@ -254,7 +263,7 @@ void VideoWidget::renderOneFrame()
 }
 
 #ifdef HAVE_OPENCV_OPENGL
-void VideoWidget::imshow(InputArray _img)
+void VideoWidget::showCvImg(InputArray _img)
 {
     this->makeCurrent();
 
@@ -266,11 +275,13 @@ void VideoWidget::imshow(InputArray _img)
         mOglTex.copyFrom(mOglBuf);
         mOglTex.setAutoRelease(false);
     }
-    else
+    else if  (_img.kind() == _InputArray::MAT)
     {
         mOglTex.copyFrom(_img);
         mOglTex.setAutoRelease(false);
     }
+    else
+        Q_ASSERT(0);
     m_OglTexValid = true;
 
     this->updateGL();

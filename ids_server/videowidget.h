@@ -2,7 +2,7 @@
 #define VIDEOWIDGET_H
 
 #define HAVE_OPENCV_OPENGL
-#define HAVE_OPENCV_CUDA
+//#define HAVE_OPENCV_CUDA
 
 #define TIME_PER_FRAME 30
 
@@ -65,7 +65,7 @@ protected:
     void resizeGL(int w, int h);
     void paintGL();
 private:
-    void imshow(InputArray _img);
+    void showCvImg(InputArray _img);
     bool                m_OglTexValid;
     cv::ogl::Texture2D  mOglTex;
     cv::ogl::Buffer     mOglBuf;
