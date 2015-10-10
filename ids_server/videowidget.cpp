@@ -60,7 +60,7 @@ VideoWidget::VideoWidget(QWidget *parent) :
     mImgInfoClone.cv_img = NULL;
 
     mPlayer = NULL;
-    mStatusText = QString("连接...");
+    mStatusText = QString("连接中...");
     connect(&mTimer, SIGNAL(timeout()), this, SLOT(renderOneFrame()));
     mTimer.start(TIME_PER_FRAME);
 

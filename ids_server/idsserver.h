@@ -88,7 +88,6 @@ private:
     QActionGroup        *mSceneGroup;                    //用来实现子菜单选项互斥
     QAction             *mSceneList[IDS_LAYOUT_MAX_NUM];
     int                 mSceneNum;
-    int                 mSceneId;
 
     int                 mWinNum;
     VideoWidget         *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];

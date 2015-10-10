@@ -43,6 +43,14 @@ static void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
     }
 }
 
+static void layout_set_cb(gpointer buf, gint buf_size, gpointer priv)
+{
+    Q_ASSERT(buf_size == sizeof(IdsResponse));
+    IdsResponse *pres = (IdsResponse *)buf;
+    Q_ASSERT(pres->magic == IDS_RESPONSE_MAGIC);
+    ((idsServer *)priv)->mMsgRet = pres->ret;
+}
+
 static void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
     IpcCfgAll *ipc_cfg_all = (IpcCfgAll *)buf;
@@ -102,7 +110,6 @@ idsServer::idsServer(QWidget *parent) :
     for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
         mWidgetList[i] = NULL;
 
-    mSceneId = -1;
     mSceneNum = 0;
     mSceneGroup = new QActionGroup(this);        //创建菜单项组，里面的菜单项为互斥
     for (i=0; i<IDS_LAYOUT_MAX_NUM; i++)
@@ -165,11 +172,7 @@ idsServer::idsServer(QWidget *parent) :
         qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet);
 
     newSceneList();
-    if (mSceneNum > 0)
-    {
-//        mSceneId = 0;                                                       //default play the first scene
-//        QTimer::singleShot(1000, this, SLOT(idsPlayerStartSlot()));
-    }
+    QTimer::singleShot(2000, this, SLOT(idsPlayerStartSlot()));
 }
 
 idsServer::~idsServer()
@@ -240,8 +243,8 @@ void idsServer::newSceneList(void)
         mSceneGroup->addAction(mSceneList[i]);                                                         //添加菜单项到组里
         mSceneSwitchMenu->addAction(mSceneList[i]);                                               //把action项放入子菜单中
     }
-    if (mSceneId >= 0 && mSceneId < mSceneNum)
-        mSceneList[mSceneId]->setChecked(true);
+    if (mLayoutAll.id >= 0 && mLayoutAll.id < mSceneNum)
+        mSceneList[mLayoutAll.id]->setChecked(true);
 }
 void idsServer::deleteSceneList(void)
 {
@@ -257,7 +260,7 @@ void idsServer::deleteSceneList(void)
 
 void idsServer::idsPlayerStartSlot(void)
 {
-    if (mSceneId < 0 || mSceneId >= mSceneNum)
+    if (mLayoutAll.id < 0 || mLayoutAll.id >= mSceneNum)
         return;
 
     mMutex.lock();
@@ -267,17 +270,17 @@ void idsServer::idsPlayerStartSlot(void)
     int i;
 
     for (i=0; i<IDS_LAYOUT_WIN_MAX_NUM; i++)
-        if (mLayoutAll.layout[mSceneId].win[i].w <= 0)
+        if (mLayoutAll.layout[mLayoutAll.id].win[i].w <= 0)
             break;
     mWinNum = i;
 
     for (i=0; i<mWinNum; i++)
     {
         mWidgetList[i] = new VideoWidget(this);
-        mWidgetList[i]->setGeometry(winW * mLayoutAll.layout[mSceneId].win[i].x / IDS_LAYOUT_WIN_W,
-                                    winH * mLayoutAll.layout[mSceneId].win[i].y / IDS_LAYOUT_WIN_H,
-                                    winW * mLayoutAll.layout[mSceneId].win[i].w / IDS_LAYOUT_WIN_W,
-                                    winH * mLayoutAll.layout[mSceneId].win[i].h / IDS_LAYOUT_WIN_H);
+        mWidgetList[i]->setGeometry(winW * mLayoutAll.layout[mLayoutAll.id].win[i].x / IDS_LAYOUT_WIN_W,
+                                    winH * mLayoutAll.layout[mLayoutAll.id].win[i].y / IDS_LAYOUT_WIN_H,
+                                    winW * mLayoutAll.layout[mLayoutAll.id].win[i].w / IDS_LAYOUT_WIN_W,
+                                    winH * mLayoutAll.layout[mLayoutAll.id].win[i].h / IDS_LAYOUT_WIN_H);
         mWidgetList[i]->show();
 
         mPlayThread[i].mPriv = (void *)this;
@@ -293,7 +296,7 @@ void idsServer::idsPlayerStartOneSlot(int playerId)
 
     int vid;
     gchar *urls[IPC_CFG_STITCH_CNT] = {0};
-    vid = mLayoutAll.layout[mSceneId].win[playerId].vid;
+    vid = mLayoutAll.layout[mLayoutAll.id].win[playerId].vid;
     if (vid == 0) // stitch
     {
         int i;
@@ -364,10 +367,17 @@ void idsServer::idsPlayerShowSlot(void)
 
 void idsServer::sceneSwitchSlot(void)
 {
-    if (mSceneId != mSceneGroup->checkedAction()->whatsThis().toInt())
+    if (mLayoutAll.id != mSceneGroup->checkedAction()->whatsThis().toInt())
     {
         idsPlayerStopSlot();
-        mSceneId = mSceneGroup->checkedAction()->whatsThis().toInt();
+
+        mLayoutAll.id = mSceneGroup->checkedAction()->whatsThis().toInt();
+
+        ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SET_LAYOUT, -1,
+                               &mLayoutAll, sizeof(IdsLayoutAll), layout_set_cb, (void*)this, 1);
+        if (mMsgRet != MSG_EXECUTE_OK)
+            qDebug() << QString().sprintf("ids cmd set layout cfg error. code = %d.", mMsgRet);
+
         idsPlayerStartSlot();
     }
 }
