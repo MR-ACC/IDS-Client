@@ -75,9 +75,9 @@ private:
     void newSceneList(void);
     void deleteSceneList(void);
 
-    Ui::idsServer     *ui;
-    QMenu              *mMainMenu;                          //主菜单
-    QMenu              *mSceneSwitchMenu;             //二级菜单
+    Ui::idsServer       *ui;
+    QMenu               *mMainMenu;                      //主菜单
+    QMenu               *mSceneSwitchMenu;               //二级菜单
     QAction             *mChnCfg;
     QAction             *mLayoutCfg;
     QAction             *mDispmodeCfg;
@@ -85,15 +85,14 @@ private:
     QAction             *mAbout;
     QAction             *mExit;
 
-    QActionGroup  *mSceneGroup;                    //用来实现子菜单选项互斥
+    QActionGroup        *mSceneGroup;                    //用来实现子菜单选项互斥
     QAction             *mSceneList[IDS_LAYOUT_MAX_NUM];
-    int                       mSceneNum;
-    int                       mSceneId;
+    int                 mSceneNum;
+    int                 mSceneId;
 
-    int                       mWinNum;
-    int                       mWinIdStitch, mWinIdLink;
-    VideoWidget     *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
-    PlayThread        mPlayThread[IDS_LAYOUT_WIN_MAX_NUM];
+    int                 mWinNum;
+    VideoWidget         *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
+    PlayThread          mPlayThread[IDS_LAYOUT_WIN_MAX_NUM];
     QMutex              mPlayMutex[IDS_LAYOUT_WIN_MAX_NUM];
 
     QMutex              mMutex;

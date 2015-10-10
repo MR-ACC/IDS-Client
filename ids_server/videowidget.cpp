@@ -4,7 +4,7 @@ void videowidget_render_frame_cb(gpointer priv, ImageInfo *piinfo)
 {
     VideoWidget *window = (VideoWidget *)priv;
 
-    if (false == window->mMutex.tryLock())
+    if (false == window->mImgMutex.tryLock())
         return;
 
     window->mUpdateFlag = true;
@@ -38,7 +38,7 @@ void videowidget_render_frame_cb(gpointer priv, ImageInfo *piinfo)
 #endif
     }
 
-    window->mMutex.unlock();
+    window->mImgMutex.unlock();
 }
 
 #ifdef HAVE_OPENCV_OPENGL
@@ -55,12 +55,12 @@ VideoWidget::VideoWidget(QWidget *parent) :
     this->setPalette(palette);
     this->setAutoFillBackground(true);
 
-    mPlayer = NULL;
-    mStatusText = QString("");
-
     mUpdateFlag = false;
     mImgInfoClone.buf = NULL;
     mImgInfoClone.cv_img = NULL;
+
+    mPlayer = NULL;
+    mStatusText = QString("连接...");
     connect(&mTimer, SIGNAL(timeout()), this, SLOT(renderOneFrame()));
     mTimer.start(TIME_PER_FRAME);
 
@@ -116,11 +116,13 @@ void VideoWidget::startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags
         mStatusText = "路径无效";
     else
     {
+        gchar urls[IPC_CFG_STITCH_CNT][256];
         int i;
         WindowInfo winfo[IPC_CFG_STITCH_CNT];
         for (i=0; i<nums; i++)
         {
-            winfo[i].media_url = rtsp_urls[i];
+            strcpy(urls[i], rtsp_urls[i]);
+            winfo[i].media_url = urls[i];
             winfo[i].win_w = width();
             winfo[i].win_h = height();
             winfo[i].win_id = GUINT_TO_POINTER(winId());
@@ -150,6 +152,8 @@ void VideoWidget::startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags
                 mStatusText += QString(rtsp_urls[i]);
             }
         }
+        else
+            mStatusText = QString("");
     }
 
     this->update();
@@ -157,8 +161,7 @@ void VideoWidget::startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags
 
 void VideoWidget::stopPlay()
 {
-    if (mTimer.isActive()) //fixme
-        mTimer.stop();
+    mTimer.stop();
     if (mPlayer != NULL)
     {
         ids_stop_stream(mPlayer);
@@ -169,15 +172,18 @@ void VideoWidget::stopPlay()
 void VideoWidget::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
-    QFont font = QApplication::font();
-    font.setPixelSize(20);
-    painter.setFont(font);
-    QRect rect;
-    rect = QRect(0, 0, width(), height());
-    painter.setPen(QColor(10,10,10));
-    painter.drawRect(rect);
-    painter.setPen(QColor(180,180,180));
-    painter.drawText(rect, Qt::AlignCenter, mStatusText);
+    if (mStatusText != "")
+    {
+        QFont font = QApplication::font();
+        font.setPixelSize(20);
+        painter.setFont(font);
+        QRect rect;
+        rect = QRect(0, 0, width(), height());
+        painter.setPen(QColor(10,10,10));
+        painter.drawRect(rect);
+        painter.setPen(QColor(180,180,180));
+        painter.drawText(rect, Qt::AlignCenter, mStatusText);
+    }
 
 #ifndef HAVE_OPENCV_OPENGL
     if (mImgInfoClone.buf != NULL && mImgInfoClone.img_flag == CV_IMG_TYPE_DEFAULT)
@@ -207,7 +213,7 @@ void VideoWidget::paintEvent(QPaintEvent* event)
 
 void VideoWidget::renderOneFrame()
 {
-    if (false == mMutex.tryLock())
+    if (false == mImgMutex.tryLock())
         return;
 
     if (mUpdateFlag)
@@ -244,7 +250,7 @@ void VideoWidget::renderOneFrame()
             Q_ASSERT(0);
         }
     }
-    mMutex.unlock();
+    mImgMutex.unlock();
 }
 
 #ifdef HAVE_OPENCV_OPENGL

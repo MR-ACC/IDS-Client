@@ -271,9 +271,6 @@ void idsServer::idsPlayerStartSlot(void)
             break;
     mWinNum = i;
 
-    mWinIdStitch = -1;
-    mWinIdLink = -1;
-
     for (i=0; i<mWinNum; i++)
     {
         mWidgetList[i] = new VideoWidget(this);
@@ -290,16 +287,15 @@ void idsServer::idsPlayerStartSlot(void)
     mMutex.unlock();
 }
 
-void idsServer::idsPlayerStartOneSlot(int winId)
+void idsServer::idsPlayerStartOneSlot(int playerId)
 {
-    mPlayMutex[winId].lock();
+    mPlayMutex[playerId].lock();
 
     int vid;
     gchar *urls[IPC_CFG_STITCH_CNT] = {0};
-    vid = mLayoutAll.layout[mSceneId].win[winId].vid;
+    vid = mLayoutAll.layout[mSceneId].win[playerId].vid;
     if (vid == 0) // stitch
     {
-        mWinIdStitch = winId;
         int i;
         for (i=0; i<IPC_CFG_STITCH_CNT; i++)
         {
@@ -307,12 +303,8 @@ void idsServer::idsPlayerStartOneSlot(int winId)
                 break;
             urls[i] = mIpcCfgAll.ipc_sti[i].url;
         }
-        mWidgetList[winId]->startPlay(urls, i);
+        mWidgetList[playerId]->startPlay(urls, i);
     } //if (vid == 0) // stitch
-    else if (vid == 1) //link
-    {
-        mWinIdLink = winId;
-    } //else if (vid == 1) //link
     else
     {
         Q_ASSERT(vid < 2+IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT);
@@ -320,112 +312,9 @@ void idsServer::idsPlayerStartOneSlot(int winId)
             urls[0] = mIpcCfgAll.ipc_sti[vid-2].url;
         else
             urls[0] = mIpcCfgAll.ipc[vid-2-IPC_CFG_STITCH_CNT].url;
-        mWidgetList[winId]->startPlay(urls[0]);
+        mWidgetList[playerId]->startPlay(urls[0]);
     } //else
-    mWidgetList[winId]->update(); // can not call repaint in a thread??
-    mPlayMutex[winId].unlock();
-    /*
-    mPlayerList[i] = NULL;
-
-    WindowInfo winfo[IPC_CFG_STITCH_CNT];
-    int j, vid, ret = -2;
-    vid = mLayoutAll.layout[mSceneId].win[i].vid;
-    if (vid == 0) // stitch
-    {
-        mWinIdStitch = i;
-        for (j=0; j<IPC_CFG_STITCH_CNT; j++)
-        {
-            if (0 == mIpcCfgAll.ipc_sti[j].url[0])
-                break;
-            winfo[j].media_url = mIpcCfgAll.ipc_sti[j].url;
-            winfo[j].win_w = this->mWidgetList[i]->width();
-            winfo[j].win_h = this->mWidgetList[i]->height();
-            winfo[j].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
-            winfo[j].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
-            winfo[j].flags = IDS_USE_THE_SAME_WINDOW;
-#ifdef VIDEOWIDGET_RENDER_OPENCV
-            winfo[j].draw = videowidget_render_frame_cb;
-            winfo[j].priv = this->mWidgetList[i];
-//            winfo[j].draw_fmt = IDS_FMT_RGB24;
-    #ifndef VIDEOWIDGET_RENDER_OPENCV_CUDA
-            winfo[j].flags |= IDS_ENABLE_CV_ACCEL;
-    #else
-            winfo[j].flags |= IDS_ENABLE_CV_CUDA_ACCEL;
-    #endif
-#elif defined(VIDEOWIDGET_RENDER_RGB32)
-            winfo[j].draw = videowidget_render_frame_cb;
-            winfo[j].priv = this->mWidgetList[i];
-            winfo[j].draw_fmt = IDS_FMT_RGB32;
-#elif defined(VIDEOWIDGET_RENDER_SDL)
-            winfo[j].draw = 0;
-#endif
-        }
-        if (j == 0)
-            mWidgetList[i]->mStatusText = QString("路径无效");
-        else
-        {
-            ret = ids_play_stream(&winfo[0], j, IDS_TYPE(IDS_TYPE_STITCH) | IDS_TYPE(IDS_TYPE_MOUSE_LINKAGE), NULL, this, &mPlayerList[i]);
-            if (0 != ret)
-                mWidgetList[i]->mStatusText = QString("");
-            else
-            {
-                mWidgetList[i]->mStatusText = QString("连接失败");
-                for (j=0; j<IPC_CFG_STITCH_CNT; j++)
-                {
-                    if (mIpcCfgAll.ipc_sti[j].url[0] == 0)
-                        break;
-                    mWidgetList[i]->mStatusText += QString("\n");
-                    mWidgetList[i]->mStatusText += QString(mIpcCfgAll.ipc_sti[j].url);
-                }
-            }
-        }
-    } //if (vid == 0) // stitch
-    else if (vid == 1) //link
-    {
-        mWinIdLink = i;
-    } //else if (vid == 1) //link
-    else
-    {
-        Q_ASSERT(vid < 2+IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT);
-        if (vid < 2+IPC_CFG_STITCH_CNT)
-            winfo[0].media_url = mIpcCfgAll.ipc_sti[vid-2].url;
-        else
-            winfo[0].media_url = mIpcCfgAll.ipc[vid-2-IPC_CFG_STITCH_CNT].url;
-        if (0 == winfo[0].media_url[0])
-            mWidgetList[i]->mStatusText = QString("路径无效");
-        else
-        {
-            winfo[0].win_w = this->mWidgetList[i]->width();
-            winfo[0].win_h = this->mWidgetList[i]->height();
-            winfo[0].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
-            winfo[0].win_id = GUINT_TO_POINTER(mWidgetList[i]->winId());
-            winfo[0].flags = 0;
-
-#ifdef VIDEOWIDGET_RENDER_OPENCV
-            winfo[0].draw = videowidget_render_frame_cb;
-            winfo[0].priv = this->mWidgetList[i];
-            winfo[0].draw_fmt = IDS_FMT_RGB24;
-//            winfo[0].flags |= IDS_ENABLE_CV_ACCEL;
-#elif defined(VIDEOWIDGET_RENDER_RGB32)
-            winfo[0].draw = videowidget_render_frame_cb;
-            winfo[0].priv = this->mWidgetList[i];
-            winfo[0].draw_fmt = IDS_FMT_RGB32;
-#elif defined(VIDEOWIDGET_RENDER_SDL)
-            winfo[0].draw = 0;
-#endif
-
-            ret = ids_play_stream(&winfo[0], 1, 0, NULL, this, &mPlayerList[i]);
-            if (0 != ret)
-                mWidgetList[i]->mStatusText = QString("");
-            else
-            {
-                mWidgetList[i]->mStatusText = QString("连接失败\n");
-                mWidgetList[i]->mStatusText += QString(winfo[0].media_url);
-            }
-        }
-    } //else
-    mWidgetList[i]->update(); // can not call repaint in a thread??
-    */
+    mPlayMutex[playerId].unlock();
 }
 
 void idsServer::idsPlayerStopSlot(void)

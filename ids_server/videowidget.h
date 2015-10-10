@@ -49,14 +49,13 @@ public:
 
     bool            mUpdateFlag;
     ImageInfo       mImgInfoClone;
-    QMutex          mMutex;
+    QMutex          mImgMutex;
+    IdsPlayer       *mPlayer;
+    QString         mStatusText;
+    QTimer          mTimer;
 
 protected:
     void paintEvent(QPaintEvent* event);
-private:
-    IdsPlayer*      mPlayer;
-    QString         mStatusText;
-    QTimer          mTimer;
 private slots:
     void renderOneFrame();
 
