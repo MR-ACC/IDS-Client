@@ -6,35 +6,35 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>485</width>
-    <height>280</height>
+    <width>602</width>
+    <height>367</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>485</width>
-    <height>280</height>
+    <width>602</width>
+    <height>367</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>485</width>
-    <height>280</height>
+    <width>602</width>
+    <height>367</height>
    </size>
   </property>
   <property name="font">
    <font>
-    <family>aakar</family>
+    <family>Serif</family>
     <pointsize>14</pointsize>
-    <weight>75</weight>
-    <bold>true</bold>
+    <weight>50</weight>
+    <bold>false</bold>
    </font>
   </property>
   <property name="windowTitle">
    <string>拼接服务器升级</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_3">
-   <item row="0" column="0">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
     <widget class="QGroupBox" name="information">
      <property name="minimumSize">
       <size>
@@ -44,6 +44,7 @@
      </property>
      <property name="font">
       <font>
+       <family>Sans Serif</family>
        <pointsize>14</pointsize>
       </font>
      </property>
@@ -64,22 +65,23 @@
         </property>
         <property name="font">
          <font>
-          <family>Times New Roman</family>
+          <family>Sans Serif</family>
           <pointsize>14</pointsize>
          </font>
         </property>
         <property name="text">
-         <string>1. 升级过程中，请不要断开服务器电源和网络连接。</string>
+         <string>升级过程中，请不要断开服务器电源和网络连接。</string>
         </property>
        </widget>
       </item>
      </layout>
     </widget>
    </item>
-   <item row="1" column="0">
+   <item>
     <widget class="QGroupBox" name="upgrade">
      <property name="font">
       <font>
+       <family>Sans Serif</family>
        <pointsize>14</pointsize>
       </font>
      </property>
@@ -102,6 +104,7 @@
           </property>
           <property name="font">
            <font>
+            <family>Sans Serif</family>
             <pointsize>14</pointsize>
            </font>
           </property>
@@ -115,21 +118,13 @@
         </item>
         <item>
          <widget class="QLineEdit" name="lineEditFile">
-          <property name="minimumSize">
-           <size>
-            <width>131</width>
-            <height>45</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>131</width>
-            <height>26</height>
-           </size>
+          <property name="enabled">
+           <bool>false</bool>
           </property>
           <property name="font">
            <font>
-            <pointsize>10</pointsize>
+            <family>Sans Serif</family>
+            <pointsize>14</pointsize>
            </font>
           </property>
           <property name="readOnly">
@@ -145,43 +140,14 @@
             <height>45</height>
            </size>
           </property>
-          <property name="maximumSize">
-           <size>
-            <width>85</width>
-            <height>27</height>
-           </size>
-          </property>
           <property name="font">
            <font>
+            <family>Sans Serif</family>
             <pointsize>14</pointsize>
            </font>
           </property>
           <property name="text">
            <string>浏览(&amp;B)</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButtonSend">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>45</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>85</width>
-            <height>27</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>14</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>升级(&amp;U)</string>
           </property>
          </widget>
         </item>
@@ -193,6 +159,7 @@
          <widget class="QLabel" name="label">
           <property name="font">
            <font>
+            <family>Sans Serif</family>
             <pointsize>14</pointsize>
            </font>
           </property>
@@ -209,20 +176,9 @@
           <property name="enabled">
            <bool>false</bool>
           </property>
-          <property name="minimumSize">
-           <size>
-            <width>45</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>111</width>
-            <height>20</height>
-           </size>
-          </property>
           <property name="font">
            <font>
+            <family>Sans Serif</family>
             <pointsize>14</pointsize>
            </font>
           </property>
@@ -233,16 +189,40 @@
         </item>
         <item>
          <spacer name="horizontalSpacer">
+          <property name="font">
+           <font>
+            <family>Sans Serif</family>
+           </font>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>80</width>
+            <width>40</width>
             <height>20</height>
            </size>
           </property>
          </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonSend">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>45</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Sans Serif</family>
+            <pointsize>14</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>升级(&amp;U)</string>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QPushButton" name="pushButtonClose">
@@ -254,6 +234,7 @@
           </property>
           <property name="font">
            <font>
+            <family>Sans Serif</family>
             <pointsize>14</pointsize>
             <weight>50</weight>
             <bold>false</bold>
@@ -267,21 +248,13 @@
        </layout>
       </item>
      </layout>
-     <zorder>lineEditTag</zorder>
-     <zorder>label</zorder>
-     <zorder>pushButtonBrow</zorder>
-     <zorder>label_2</zorder>
-     <zorder>lineEditFile</zorder>
-     <zorder>pushButtonSend</zorder>
-     <zorder>pushButtonClose</zorder>
-     <zorder>horizontalSpacer</zorder>
-     <zorder></zorder>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item>
     <widget class="QGroupBox" name="upgrade_status">
      <property name="font">
       <font>
+       <family>Sans Serif</family>
        <pointsize>14</pointsize>
       </font>
      </property>
@@ -295,9 +268,9 @@
       <property name="geometry">
        <rect>
         <x>17</x>
-        <y>25</y>
-        <width>441</width>
-        <height>20</height>
+        <y>35</y>
+        <width>551</width>
+        <height>51</height>
        </rect>
       </property>
       <property name="minimumSize">
@@ -308,7 +281,8 @@
       </property>
       <property name="font">
        <font>
-        <pointsize>10</pointsize>
+        <family>Sans Serif</family>
+        <pointsize>14</pointsize>
        </font>
       </property>
       <property name="text">
@@ -324,10 +298,6 @@
     </widget>
    </item>
   </layout>
-  <zorder>information</zorder>
-  <zorder>upgrade</zorder>
-  <zorder>upgrade_status</zorder>
-  <zorder>pushButtonClose</zorder>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

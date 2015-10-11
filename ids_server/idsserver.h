@@ -46,16 +46,14 @@ public:
     bool                          mDispmodePreviewFlag;
 
 signals:
+    void idsPlayerRestart();
     void idsPlayerStartOne(int);
-    void idsPlayerStart();
-    void idsPlayerStop();
     void idsPlayerHide();
     void idsPlayerShow();
 
-public slots:
+private slots:
+    void idsPlayerRestartSlot(void);
     void idsPlayerStartOneSlot(int);
-    void idsPlayerStartSlot(void);
-    void idsPlayerStopSlot(void);
     void idsPlayerHideSlot(void);
     void idsPlayerShowSlot(void);
     void sceneSwitchSlot(void);
@@ -72,9 +70,9 @@ protected:
     void closeEvent(QCloseEvent *);
 
 private:
-    void newSceneList(void);
-    void deleteSceneList(void);
-
+    void idsRefresh(void);
+    void idsPlayerStart(void);
+    void idsPlayerStop(void);
     Ui::idsServer       *ui;
     QMenu               *mMainMenu;                      //主菜单
     QMenu               *mSceneSwitchMenu;               //二级菜单

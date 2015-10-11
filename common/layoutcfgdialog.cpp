@@ -1,6 +1,7 @@
 #include "layoutcfgdialog.h"
 #include "ui_layoutcfgdialog.h"
 #include <QDesktopWidget>
+#include <QPushButton>
 
 static void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
@@ -33,6 +34,9 @@ layoutCfgDialog::layoutCfgDialog(QWidget *parent) :
     ui->setupUi(this);
     QDesktopWidget* desktop = QApplication::desktop();
     move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
+    this->ui->buttonBox->button(QDialogButtonBox::Ok)->setText("确定");
+    this->ui->buttonBox->button(QDialogButtonBox::Cancel)->setText("取消");
+
     isDrawing = false;
     isLayoutSwitch = false;
     isNewLayout = false;
@@ -56,7 +60,6 @@ layoutCfgDialog::layoutCfgDialog(QWidget *parent) :
     this->ui->comboBoxChannel->setVisible(false);
 
     connect(this, SIGNAL(sig(int)), this, SLOT(msgslot(int)));
-
 
     mBrushFull = new QBrush(QColor(80,80,80),Qt::SolidPattern);
     mBrushEmpty = new QBrush(Qt::gray,Qt::SolidPattern);

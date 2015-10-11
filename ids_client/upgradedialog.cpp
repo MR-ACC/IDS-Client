@@ -35,7 +35,7 @@ void Dialog::on_pushButtonBrow_clicked()
     QString filter; 
     filter = ".fw";
     QString filename;
-    if((filename = QFileDialog::getOpenFileName(this, tr("选择文件"), tr("."), tr("固件 (*.*)"))) != NULL )
+    if((filename = QFileDialog::getOpenFileName(this, tr("选择文件"), tr("."), tr("固件 (*.bin)"))) != NULL )
     {
         ui->lineEditFile->setText(filename);
     }

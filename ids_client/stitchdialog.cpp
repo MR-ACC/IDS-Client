@@ -6,6 +6,9 @@ stitchDialog::stitchDialog(QWidget *parent) :
     ui(new Ui::stitchDialog)
 {
     ui->setupUi(this);
+    this->ui->buttonBox->button(QDialogButtonBox::Ok)->setText("确定");
+    this->ui->buttonBox->button(QDialogButtonBox::Cancel)->setText("取消");
+
 }
 
 stitchDialog::~stitchDialog()

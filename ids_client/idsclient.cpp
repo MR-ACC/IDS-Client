@@ -44,7 +44,7 @@ QApplication::setFont(QFont("Times New Roman",14));
     this->ui->pushButton_layoutcfg->setEnabled(false);
     this->ui->pushButton_netcfg->setEnabled(false);
     this->ui->pushButton_stitch->setEnabled(false);
-    this->ui->pushButton_upgrade->setEnabled(false);
+    //this->ui->pushButton_upgrade->setEnabled(false);
 }
 
 idsclient::~idsclient()

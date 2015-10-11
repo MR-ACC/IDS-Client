@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QDesktopWidget>
+#include <QPushButton>
 
 NetCfgDialog::NetCfgDialog(QWidget *parent) :
     QDialog(parent),
@@ -12,6 +13,9 @@ NetCfgDialog::NetCfgDialog(QWidget *parent) :
     QDesktopWidget* desktop = QApplication::desktop();
     move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
     layout()->setSizeConstraint(QLayout::SetFixedSize);
+
+    this->ui->NetCfgbuttonBox->button(QDialogButtonBox::Ok)->setText("确定");
+    this->ui->NetCfgbuttonBox->button(QDialogButtonBox::Cancel)->setText("取消");
 
     connect(ui->NetCfgbuttonBox, SIGNAL(accepted()), this, SLOT(netcfgAccept()));
     connect(ui->NetCfgbuttonBox, SIGNAL(rejected()), this, SLOT(netcfgReject()));

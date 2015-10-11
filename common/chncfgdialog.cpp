@@ -2,6 +2,7 @@
 #include "ui_chncfgdialog.h"
 #include <QMessageBox>
 #include <QDesktopWidget>
+#include <QPushButton>
 
 static void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
@@ -31,6 +32,9 @@ ChnCfgDialog::ChnCfgDialog(QWidget *parent) :
     ui(new Ui::ChnCfgDialog)
 {
     ui->setupUi(this);
+
+    this->ui->buttonBox->button(QDialogButtonBox::Ok)->setText("确定");
+    this->ui->buttonBox->button(QDialogButtonBox::Cancel)->setText("取消");
 
     this->ui->tableWidget->setRowCount(IPC_CFG_MAX_CNT);
     this->ui->tableWidget->setColumnWidth(0, 400);

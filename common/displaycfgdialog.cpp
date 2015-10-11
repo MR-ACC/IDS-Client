@@ -3,6 +3,7 @@
 #include <QtGui>
 #include <QMessageBox>
 #include <QDesktopWidget>
+#include <QPushButton>
 
 #define MAX_MODE_NUMBERS 20
 const int mode_v_cnt[MAX_MODE_NUMBERS] = {1, 1, 1, 1, 2, 2, 2, 0};
@@ -52,6 +53,8 @@ displayCfgDialog::displayCfgDialog(QWidget *parent) :
     QDesktopWidget* desktop = QApplication::desktop();
     move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
 
+    this->ui->displayCfgButtonBox->button(QDialogButtonBox::Ok)->setText("确定");
+    this->ui->displayCfgButtonBox->button(QDialogButtonBox::Cancel)->setText("取消");
     connect(ui->listWidget_mode, SIGNAL(itemSelectionChanged()), this, SLOT(modeResChanged()));
     connect(ui->listWidget_res, SIGNAL(itemSelectionChanged()), this, SLOT(modeResChanged()));
 }
@@ -129,6 +132,7 @@ int displayCfgDialog::idsUpdate(gpointer endpoint)
     for (i=0; i<mModeCnt; i++)
         ui->listWidget_mode->addItem(QString().sprintf("%d * %d", mode_v_cnt[i], mode_h_cnt[i]));
 
+    ui->listWidget_res->setEnabled(false);
     ui->listWidget_res->clear();
     for (i=0; i<mResCnt; i++)
         ui->listWidget_res->addItem(QString().sprintf("%d * %d", mResAll[i].w, mResAll[i].h));
@@ -272,7 +276,7 @@ void displayCfgDialog::accept()
 {
     if (mModeId == -1 || mResId == -1)
     {
-        this->close();
+        QMessageBox::critical(this, "提示", "请选择模式和分辨率.", QMessageBox::Yes, NULL);
         return;
     }
 
@@ -329,6 +333,7 @@ void displayCfgDialog::modeResChanged()
     if (items.size() == 1)
         mModeId = ui->listWidget_mode->row(items[0]);
 
+    ui->listWidget_res->setEnabled(true);
     items = ui->listWidget_res->selectedItems();
     if (items.size() == 1)
         mResId = ui->listWidget_res->row(items[0]);
