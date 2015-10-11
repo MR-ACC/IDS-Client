@@ -53,11 +53,11 @@ layoutCfgDialog::layoutCfgDialog(QWidget *parent) :
     pix = QPixmap(this->width(),this->height());
     pix.fill(Qt::white);
 
-    this->ui->btnDoneNew->setVisible(false);
-    this->ui->btnCancelNew->setVisible(false);
-    this->ui->labelChannel->setVisible(false);
-    this->ui->comboBoxCameraType->setVisible(false);
-    this->ui->comboBoxChannel->setVisible(false);
+    this->ui->btnDoneNew->setEnabled(false);
+    this->ui->btnCancelNew->setEnabled(false);
+    this->ui->labelChannel->setEnabled(false);
+    this->ui->comboBoxCameraType->setEnabled(false);
+    this->ui->comboBoxChannel->setEnabled(false);
 
     connect(this, SIGNAL(sig(int)), this, SLOT(msgslot(int)));
 
@@ -123,16 +123,16 @@ layoutCfgDialog::layoutCfgDialog(QWidget *parent) :
 //    this->ui->comboBoxLayoutList->addItem(QString(mlayout.layout[1].name));
 
     //    //read cfg end
-    mVidList[0] = "拼接画面";
-    mVidList[1] = "联动画面";
-    mVidList[2] = "高点1";
-    mVidList[3] = "高点2";
-    mVidList[4] = "高点3";
-    mVidList[5] = "高点4";
+    mVidList[0] = "拼接摄像机";
+    mVidList[1] = "联动摄像机";
+    mVidList[2] = "高点摄像机1";
+    mVidList[3] = "高点摄像机2";
+    mVidList[4] = "高点摄像机3";
+    mVidList[5] = "高点摄像机4";
 
     for(int i = 6; i < 70; i++)
     {
-        mVidList[i] = "低点" + QString::number(i - 5);
+        mVidList[i] = "低点摄像机" + QString::number(i - 5);
     }
 
     on_comboBoxCameraType_currentIndexChanged(this->ui->comboBoxCameraType->currentIndex());
@@ -441,16 +441,16 @@ void layoutCfgDialog::on_btnNewLayout_clicked()
 
     isNewLayout = true;
     this->ui->btnNewLayout->setEnabled(false);
-    this->ui->btnDoneNew->setVisible(true);
-    this->ui->btnCancelNew->setVisible(true);
+    this->ui->btnDoneNew->setEnabled(true);
+    this->ui->btnCancelNew->setEnabled(true);
     this->ui->comboBoxLayoutList->setEnabled(false);
     this->ui->btnDel->setEnabled(false);
     this->ui->btnModify->setEnabled(false);
     this->ui->lineEditLayoutName->setEnabled(false);
-    this->ui->buttonBox->setVisible(false);
-    this->ui->labelChannel->setVisible(true);
-    this->ui->comboBoxCameraType->setVisible(true);
-    this->ui->comboBoxChannel->setVisible(true);
+    this->ui->buttonBox->setEnabled(false);
+    this->ui->labelChannel->setEnabled(true);
+    this->ui->comboBoxCameraType->setEnabled(true);
+    this->ui->comboBoxChannel->setEnabled(true);
 
     for(int i = 0; i < IDS_LAYOUT_WIN_H; i++)
         for(int j = 0; j < IDS_LAYOUT_WIN_W; j++)
@@ -506,13 +506,13 @@ void layoutCfgDialog::on_btnDoneNew_clicked()
     this->ui->comboBoxLayoutList->setEnabled(true);
     this->ui->btnDel->setEnabled(true);
     this->ui->btnModify->setEnabled(true);
-    this->ui->btnDoneNew->setVisible(false);
-    this->ui->btnCancelNew->setVisible(false);
+    this->ui->btnDoneNew->setEnabled(false);
+    this->ui->btnCancelNew->setEnabled(false);
     this->ui->lineEditLayoutName->setEnabled(true);
-    this->ui->buttonBox->setVisible(true);
-    this->ui->labelChannel->setVisible(false);
-    this->ui->comboBoxCameraType->setVisible(false);
-    this->ui->comboBoxChannel->setVisible(false);
+    this->ui->buttonBox->setEnabled(true);
+    this->ui->labelChannel->setEnabled(false);
+    this->ui->comboBoxCameraType->setEnabled(false);
+    this->ui->comboBoxChannel->setEnabled(false);
     mCurSelectedWin = -1;
     mlayout.num++;
 }
@@ -523,13 +523,13 @@ void layoutCfgDialog::on_btnCancelNew_clicked()
     this->ui->comboBoxLayoutList->setEnabled(true);
     this->ui->btnDel->setEnabled(true);
     this->ui->btnModify->setEnabled(true);
-    this->ui->btnDoneNew->setVisible(false);
-    this->ui->btnCancelNew->setVisible(false);
+    this->ui->btnDoneNew->setEnabled(false);
+    this->ui->btnCancelNew->setEnabled(false);
     this->ui->lineEditLayoutName->setEnabled(true);
-    this->ui->buttonBox->setVisible(true);
-    this->ui->labelChannel->setVisible(false);
-    this->ui->comboBoxCameraType->setVisible(false);
-    this->ui->comboBoxChannel->setVisible(false);
+    this->ui->buttonBox->setEnabled(true);
+    this->ui->labelChannel->setEnabled(false);
+    this->ui->comboBoxCameraType->setEnabled(false);
+    this->ui->comboBoxChannel->setEnabled(false);
 
     for(int i = 0; i < IDS_LAYOUT_WIN_MAX_NUM; i++)
         mlayout.layout[mlayout.num].win[i].w = 0;
@@ -692,10 +692,10 @@ void layoutCfgDialog::on_btnModify_clicked(bool checked)
             return;
         }
     }
-    this->ui->labelChannel->setVisible(checked);
-    this->ui->comboBoxCameraType->setVisible(checked);
-    this->ui->comboBoxChannel->setVisible(checked);
-    this->ui->buttonBox->setVisible(!checked);
+    this->ui->labelChannel->setEnabled(checked);
+    this->ui->comboBoxCameraType->setEnabled(checked);
+    this->ui->comboBoxChannel->setEnabled(checked);
+    this->ui->buttonBox->setEnabled(!checked);
     this->ui->btnNewLayout->setEnabled(!checked);
     this->ui->comboBoxLayoutList->setEnabled(!checked);
     this->ui->btnDel->setEnabled(!checked);

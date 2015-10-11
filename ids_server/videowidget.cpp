@@ -13,7 +13,7 @@ void videowidget_render_frame_cb(gpointer priv, ImageInfo *piinfo)
     if (piinfo->img_flag == CV_IMG_TYPE_DEFAULT)
     {
         window->mImgInfoClone.fmt = piinfo->fmt;
-        window->mImgInfoClone.width = piinfo->width;
+         window->mImgInfoClone.width = piinfo->width;
         window->mImgInfoClone.height = piinfo->height;
         window->mImgInfoClone.linesize = piinfo->linesize;
         if (window->mImgInfoClone.buf == NULL)

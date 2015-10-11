@@ -6,55 +6,103 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>960</width>
-    <height>460</height>
+    <width>800</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>960</width>
-    <height>460</height>
+    <width>800</width>
+    <height>480</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>960</width>
-    <height>460</height>
+    <width>800</width>
+    <height>480</height>
    </size>
   </property>
   <property name="font">
    <font>
-    <family>Times New Roman</family>
+    <family>Sans Serif</family>
     <pointsize>14</pointsize>
    </font>
   </property>
   <property name="windowTitle">
    <string>窗口布局配置</string>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>32</x>
-     <y>342</y>
-     <width>907</width>
-     <height>100</height>
+     <x>25</x>
+     <y>345</y>
+     <width>591</width>
+     <height>125</height>
     </rect>
    </property>
-   <layout class="QGridLayout" name="gridLayout_3">
-    <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="sizeConstraint">
+     <enum>QLayout::SetFixedSize</enum>
+    </property>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QLabel" name="labelChannel">
         <property name="minimumSize">
          <size>
-          <width>72</width>
-          <height>45</height>
+          <width>80</width>
+          <height>35</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>72</width>
-          <height>45</height>
+          <width>80</width>
+          <height>35</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>通道</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBoxCameraType">
+        <item>
+         <property name="text">
+          <string>拼接摄像机</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>高点摄像机</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>低点摄像机</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBoxChannel"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="minimumSize">
+         <size>
+          <width>80</width>
+          <height>35</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>80</width>
+          <height>35</height>
          </size>
         </property>
         <property name="text">
@@ -62,114 +110,21 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QComboBox" name="comboBoxLayoutList">
-        <property name="minimumSize">
-         <size>
-          <width>280</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>280</width>
-          <height>45</height>
-         </size>
-        </property>
-       </widget>
+      <item>
+       <widget class="QComboBox" name="comboBoxLayoutList"/>
       </item>
-      <item row="0" column="2">
-       <widget class="QPushButton" name="btnDel">
-        <property name="minimumSize">
-         <size>
-          <width>100</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>100</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>删除</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
-        <property name="minimumSize">
-         <size>
-          <width>72</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>72</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>布局名</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLineEdit" name="lineEditLayoutName">
-        <property name="minimumSize">
-         <size>
-          <width>280</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>280</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="maxLength">
-         <number>32</number>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QPushButton" name="btnNewLayout">
-        <property name="minimumSize">
-         <size>
-          <width>100</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>100</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>新建布局</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="1">
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
+      <item>
        <widget class="QPushButton" name="btnModify">
         <property name="minimumSize">
          <size>
-          <width>100</width>
-          <height>45</height>
+          <width>60</width>
+          <height>35</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>100</width>
-          <height>46</height>
+          <width>60</width>
+          <height>35</height>
          </size>
         </property>
         <property name="text">
@@ -180,72 +135,86 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="labelChannel">
+      <item>
+       <widget class="QPushButton" name="btnDel">
+        <property name="minimumSize">
+         <size>
+          <width>60</width>
+          <height>35</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>60</width>
+          <height>35</height>
+         </size>
+        </property>
         <property name="text">
-         <string>通道</string>
+         <string>删除</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="2" colspan="2">
-       <widget class="QComboBox" name="comboBoxCameraType">
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLabel" name="label_2">
         <property name="minimumSize">
          <size>
-          <width>100</width>
-          <height>45</height>
+          <width>80</width>
+          <height>35</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>100</width>
-          <height>45</height>
+          <width>80</width>
+          <height>35</height>
          </size>
         </property>
-        <item>
-         <property name="text">
-          <string>拼接</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>高点</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>低点</string>
-         </property>
-        </item>
+        <property name="text">
+         <string>布局名</string>
+        </property>
        </widget>
       </item>
-      <item row="0" column="4">
-       <widget class="QComboBox" name="comboBoxChannel">
+      <item>
+       <widget class="QLineEdit" name="lineEditLayoutName">
+        <property name="maxLength">
+         <number>32</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnNewLayout">
         <property name="minimumSize">
          <size>
-          <width>150</width>
-          <height>45</height>
+          <width>80</width>
+          <height>35</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>150</width>
-          <height>45</height>
+          <width>80</width>
+          <height>35</height>
          </size>
+        </property>
+        <property name="text">
+         <string>新建布局</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item>
        <widget class="QPushButton" name="btnDoneNew">
         <property name="minimumSize">
          <size>
-          <width>100</width>
-          <height>45</height>
+          <width>60</width>
+          <height>35</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>100</width>
-          <height>46</height>
+          <width>60</width>
+          <height>35</height>
          </size>
         </property>
         <property name="text">
@@ -253,18 +222,18 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1" colspan="2">
+      <item>
        <widget class="QPushButton" name="btnCancelNew">
         <property name="minimumSize">
          <size>
-          <width>100</width>
-          <height>45</height>
+          <width>60</width>
+          <height>35</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>100</width>
-          <height>46</height>
+          <width>60</width>
+          <height>35</height>
          </size>
         </property>
         <property name="text">
@@ -272,33 +241,45 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="3">
-       <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>28</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="1" column="4">
-       <widget class="QDialogButtonBox" name="buttonBox">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="standardButtons">
-         <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-        </property>
-       </widget>
-      </item>
      </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>621</x>
+     <y>352</y>
+     <width>168</width>
+     <height>111</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item>
+     <widget class="QDialogButtonBox" name="buttonBox">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>45</height>
+       </size>
+      </property>
+      <property name="standardButtons">
+       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

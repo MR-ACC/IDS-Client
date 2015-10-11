@@ -42,6 +42,7 @@ public:
     int                             mMsgRet;
     IpcCfgAll                  mIpcCfgAll;
     IdsLayoutAll            mLayoutAll;
+    IdsServerInfo          mServerInfo;
     DisplayModeInfo    mDispmodePreview;
     bool                          mDispmodePreviewFlag;
 

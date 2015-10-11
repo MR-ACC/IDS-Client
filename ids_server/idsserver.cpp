@@ -7,11 +7,16 @@
 
 void PlayThread::run()
 {
-    qDebug() << __func__ << __LINE__ << "mPlayerid" << mPlayerid;
+//    qDebug() << __func__ << __LINE__ << "mPlayerid" << mPlayerid;
     emit ((idsServer *)mPriv)->idsPlayerStartOne(mPlayerid);
 }
 
 static int refresh_event_handle(IdsEvent *pev, gpointer priv)
+{
+    emit ((idsServer *)priv)->idsPlayerRestart();
+    return EHR_ACCEPT;
+}
+static int network_changed_event_handle(IdsEvent *pev, gpointer priv)
 {
     emit ((idsServer *)priv)->idsPlayerRestart();
     return EHR_ACCEPT;
@@ -36,7 +41,6 @@ static int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
 
 static void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
-    IdsLayoutAll*layout_all = (IdsLayoutAll *)buf;
     if (sizeof(IdsLayoutAll) != buf_size)
     {
         Q_ASSERT (buf_size == sizeof(IdsResponse));
@@ -44,6 +48,7 @@ static void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
     }
     else
     {
+        IdsLayoutAll*layout_all = (IdsLayoutAll *)buf;
         ((idsServer *)priv)->mLayoutAll = *layout_all;
         ((idsServer *)priv)->mMsgRet = MSG_EXECUTE_OK;
     }
@@ -59,7 +64,6 @@ static void layout_set_cb(gpointer buf, gint buf_size, gpointer priv)
 
 static void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
-    IpcCfgAll *ipc_cfg_all = (IpcCfgAll *)buf;
     if (sizeof(IpcCfgAll) != buf_size)
     {
         Q_ASSERT (buf_size == sizeof(IdsResponse));
@@ -67,10 +71,28 @@ static void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
     }
     else
     {
+        IpcCfgAll *ipc_cfg_all = (IpcCfgAll *)buf;
         ((idsServer *)priv)->mIpcCfgAll = *ipc_cfg_all;
         ((idsServer *)priv)->mMsgRet = MSG_EXECUTE_OK;
     }
 }
+
+
+static void server_info_get_cb(gpointer buf, gint buf_size, gpointer priv)
+{
+    if (sizeof(IdsServerInfo) != buf_size)
+    {
+        Q_ASSERT (buf_size == sizeof(IdsResponse));
+        ((idsServer *)priv)->mMsgRet = ((IdsResponse*)buf)->ret;
+    }
+    else
+    {
+        IdsServerInfo *ipc_cfg_all = (IdsServerInfo *)buf;
+        ((idsServer *)priv)->mServerInfo = *ipc_cfg_all;
+        ((idsServer *)priv)->mMsgRet = MSG_EXECUTE_OK;
+    }
+}
+
 
 idsServer::idsServer(QWidget *parent) :
     QWidget(parent),
@@ -167,6 +189,8 @@ idsServer::idsServer(QWidget *parent) :
                                      NULL, disp_mode_cfg_event_handle, this);
     register_event_listener("ids-server", IDS_EVENT_AMP_REFRESH,
                                      NULL, refresh_event_handle, this);
+    register_event_listener("ids-server", IDS_TYPE_NETWORK_CHANGED,
+                                     NULL, network_changed_event_handle, this);
 
     QTimer::singleShot(2000, this, SLOT(idsPlayerRestartSlot()));
 }
@@ -381,6 +405,7 @@ void idsServer::idsPlayerShowSlot(void)
 
 void idsServer::sceneSwitchSlot(void)
 {
+    mMutex.lock();
     if (mLayoutAll.id != mSceneGroup->checkedAction()->whatsThis().toInt())
     {
         mLayoutAll.id = mSceneGroup->checkedAction()->whatsThis().toInt();
@@ -389,6 +414,7 @@ void idsServer::sceneSwitchSlot(void)
         if (mMsgRet != MSG_EXECUTE_OK)
             qDebug() << QString().sprintf("ids cmd set layout cfg error. code = %d.", mMsgRet);
     }
+    mMutex.unlock();
 }
 
 void idsServer::chnCfgSlot(void)
@@ -427,7 +453,17 @@ void idsServer::netCfgSlot(void)
 
 void idsServer::aboutSlot(void)
 {
-    QMessageBox::about(this, tr("关于"), tr("视频拼接服务器"));
+    mLayoutAll.id = mSceneGroup->checkedAction()->whatsThis().toInt();
+    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_SERVER_INFO, -1,
+                           NULL, 0, server_info_get_cb, (void*)this, 1);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        qDebug() << QString().sprintf("ids cmd set server info error. code = %d.", mMsgRet);
+    else
+    {
+        QString sys_ver = QString(tr("\n系统版本:")) + QString(mServerInfo.sys_ver);
+        QString soft_ver = QString(tr("\n软件版本:")) + QString(mServerInfo.soft_ver);
+        QMessageBox::about(this, tr("关于"), tr("视频拼接服务器\n") + sys_ver + soft_ver);
+    }
 }
 
 void idsServer::exitSlot(void)
