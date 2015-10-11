@@ -8,6 +8,8 @@ int main(int argc, char *argv[])
     font.setPointSize(14);
     a.setFont(font);
 
+    ids_set_cmdline(argc, argv);
+
     idsServer w;
     w.show();
 
