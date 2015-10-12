@@ -7,8 +7,7 @@
 
 void PlayThread::run()
 {
-//    qDebug() << __func__ << __LINE__ << "mPlayerid" << mPlayerid;
-    emit ((idsServer *)mPriv)->idsPlayerStartOne(mPlayerid);
+    ((idsServer *)mPriv)->idsThreadFuncPlay(mPlayerid);
 }
 
 static int refresh_event_handle(IdsEvent *pev, gpointer priv)
@@ -28,6 +27,7 @@ static int disp_mode_cfg_event_handle(IdsEvent *pev, gpointer priv)
     {
         ((idsServer *)priv)->mDispmodePreviewFlag = FALSE;
         emit ((idsServer *)priv)->idsPlayerShow();
+        ((idsServer *)priv)->update();
     }
     else
     {
@@ -170,7 +170,6 @@ idsServer::idsServer(QWidget *parent) :
     mDispmodePreviewFlag = FALSE;
 
     connect(this, SIGNAL(idsPlayerRestart()), this, SLOT(idsPlayerRestartSlot()));
-    connect(this, SIGNAL(idsPlayerStartOne(int)), this, SLOT(idsPlayerStartOneSlot(int)));
     connect(this, SIGNAL(idsPlayerHide()), this, SLOT(idsPlayerHideSlot()));
     connect(this, SIGNAL(idsPlayerShow()), this, SLOT(idsPlayerShowSlot()));
 
@@ -197,13 +196,8 @@ idsServer::idsServer(QWidget *parent) :
 
 idsServer::~idsServer()
 {
-    int i;
-    for (i=0; i<mSceneNum; i++)
-    {
-        mSceneSwitchMenu->removeAction(mSceneList[i]);
-        mSceneGroup->removeAction(mSceneList[i]);
-        delete mSceneList[i];
-    }
+    idsSceneListRelease();
+
     delete mSceneGroup;
     delete mSceneSwitchMenu;
     delete mMainMenu;
@@ -229,16 +223,17 @@ void idsServer::showEvent(QShowEvent *)
 void idsServer::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
-    QFont font = QApplication::font();
-    QRect rect;
-    QString text;
-    int i;
-
     if (TRUE == mDispmodePreviewFlag)
     {
+        QFont font = QApplication::font();
+        QRect rect;
+        QString text;
+
         painter.setPen(Qt::white);
         font.setPixelSize(30);
         painter.setFont(font);
+
+        int i;
 
         for (i=0; i<mDispmodePreview.monitor_nums; i++)
         {
@@ -256,6 +251,35 @@ void idsServer::paintEvent(QPaintEvent*)
     }
 }
 
+void idsServer::idsSceneListCreate(void)
+{
+    mSceneNum = mLayoutAll.num;
+    int i;
+    for (i=0; i<mSceneNum; i++)
+    {
+        mSceneList[i] = new QAction(QString(mLayoutAll.layout[i].name), this);        //创建新的菜单项
+        mSceneList[i]->setCheckable(true);                                                                     //属性是可选的
+        mSceneList[i]->setWhatsThis(QString::number(i, 10));                                      //将该属性用来做场景ID
+        connect(mSceneList[i], SIGNAL(triggered()), this, SLOT(sceneSwitchSlot()));   //该菜单项的连接信号和槽
+        mSceneGroup->addAction(mSceneList[i]);                                                         //添加菜单项到组里
+        mSceneSwitchMenu->addAction(mSceneList[i]);                                               //把action项放入子菜单中
+    }
+    if (mLayoutAll.id >= 0 && mLayoutAll.id < mSceneNum)
+        mSceneList[mLayoutAll.id]->setChecked(true);
+}
+
+void idsServer::idsSceneListRelease(void)
+{
+    int i;
+    for (i=0; i<mSceneNum; i++)
+    {
+        mSceneSwitchMenu->removeAction(mSceneList[i]);
+        mSceneGroup->removeAction(mSceneList[i]);
+        delete mSceneList[i];
+    }
+    mSceneNum = 0;
+}
+
 void idsServer::idsRefresh(void)
 {
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_LAYOUT, -1,
@@ -268,25 +292,8 @@ void idsServer::idsRefresh(void)
     if (mMsgRet != MSG_EXECUTE_OK)
         qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet);
 
-    int i;
-    for (i=0; i<mSceneNum; i++)
-    {
-        mSceneSwitchMenu->removeAction(mSceneList[i]);
-        mSceneGroup->removeAction(mSceneList[i]);
-        delete mSceneList[i];
-    }
-    mSceneNum = mLayoutAll.num;
-    for (i=0; i<mSceneNum; i++)
-    {
-        mSceneList[i] = new QAction(QString(mLayoutAll.layout[i].name), this);        //创建新的菜单项
-        mSceneList[i]->setCheckable(true);                                                                     //属性是可选的
-        mSceneList[i]->setWhatsThis(QString::number(i, 10));                                      //将该属性用来做场景ID
-        connect(mSceneList[i], SIGNAL(triggered()), this, SLOT(sceneSwitchSlot()));   //该菜单项的连接信号和槽
-        mSceneGroup->addAction(mSceneList[i]);                                                         //添加菜单项到组里
-        mSceneSwitchMenu->addAction(mSceneList[i]);                                               //把action项放入子菜单中
-    }
-    if (mLayoutAll.id >= 0 && mLayoutAll.id < mSceneNum)
-        mSceneList[mLayoutAll.id]->setChecked(true);
+        idsSceneListRelease();
+        idsSceneListCreate();
 }
 
 void idsServer::idsPlayerStart(void)
@@ -337,6 +344,7 @@ void idsServer::idsPlayerStop(void)
         mPlayMutex[i].unlock();
     }
     mWinNum = 0;
+    this->repaint();
     mMutex.unlock();
 }
 
@@ -347,7 +355,7 @@ void idsServer::idsPlayerRestartSlot(void)
     idsPlayerStart();
 }
 
-void idsServer::idsPlayerStartOneSlot(int playerId)
+void idsServer::idsThreadFuncPlay(int playerId)
 {
     mPlayMutex[playerId].lock();
 
@@ -488,7 +496,9 @@ void idsServer::contextMenuEvent(QContextMenuEvent *e)
     if (true == mMutex.tryLock())
     {
         idsRefresh();
+        idsSceneListRelease();
+        idsSceneListCreate();
         mMutex.unlock();
+        mMainMenu->exec(e->globalPos());                    //选择菜单弹出的位置
     }
-    mMainMenu->exec(e->globalPos());                    //选择菜单弹出的位置
 }

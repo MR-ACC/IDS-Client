@@ -299,7 +299,7 @@ void VideoWidget::resizeGL(int w, int h) {
 void VideoWidget::paintGL() {
     if (m_OglTexValid == false)
     {
-        glClear(GL_COLOR_BUFFER_BIT);
+//        glClear(GL_COLOR_BUFFER_BIT);
     }
     else
     {

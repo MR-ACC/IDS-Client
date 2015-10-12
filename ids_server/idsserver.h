@@ -37,6 +37,7 @@ public:
     explicit idsServer(QWidget *parent = 0);
     void contextMenuEvent(QContextMenuEvent *);
     ~idsServer();
+    void idsThreadFuncPlay(int);
 
     gpointer                   mIdsEndpoint;
     int                             mMsgRet;
@@ -54,7 +55,6 @@ signals:
 
 private slots:
     void idsPlayerRestartSlot(void);
-    void idsPlayerStartOneSlot(int);
     void idsPlayerHideSlot(void);
     void idsPlayerShowSlot(void);
     void sceneSwitchSlot(void);
@@ -74,6 +74,8 @@ private:
     void idsRefresh(void);
     void idsPlayerStart(void);
     void idsPlayerStop(void);
+    void idsSceneListRelease(void);
+    void idsSceneListCreate(void);
     Ui::idsServer       *ui;
     QMenu               *mMainMenu;                      //主菜单
     QMenu               *mSceneSwitchMenu;               //二级菜单
