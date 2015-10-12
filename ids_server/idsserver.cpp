@@ -5,11 +5,6 @@
 #include "../common/chncfgdialog.h"
 #include "../common/layoutcfgdialog.h"
 
-void PlayThread::run()
-{
-    ((idsServer *)mPriv)->idsThreadFuncPlay(mPlayerid);
-}
-
 static int refresh_event_handle(IdsEvent *pev, gpointer priv)
 {
     emit ((idsServer *)priv)->idsPlayerRestart();
@@ -253,6 +248,7 @@ void idsServer::paintEvent(QPaintEvent*)
 
 void idsServer::idsSceneListCreate(void)
 {
+    Q_ASSERT(mSceneNum == 0);
     mSceneNum = mLayoutAll.num;
     int i;
     for (i=0; i<mSceneNum; i++)
@@ -292,12 +288,13 @@ void idsServer::idsRefresh(void)
     if (mMsgRet != MSG_EXECUTE_OK)
         qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet);
 
-        idsSceneListRelease();
-        idsSceneListCreate();
+    idsSceneListRelease();
+    idsSceneListCreate();
 }
 
 void idsServer::idsPlayerStart(void)
 {
+    Q_ASSERT(mWinNum == 0);
     if (mLayoutAll.id < 0 || mLayoutAll.id >= mSceneNum)
         return;
 
@@ -321,9 +318,29 @@ void idsServer::idsPlayerStart(void)
                                     winH * mLayoutAll.layout[mLayoutAll.id].win[i].h / IDS_LAYOUT_WIN_H);
         mWidgetList[i]->show();
 
-        mPlayThread[i].mPriv = (void *)this;
-        mPlayThread[i].mPlayerid = i;
-        mPlayThread[i].start();
+        int vid;
+        gchar *urls[IPC_CFG_STITCH_CNT] = {0};
+        vid = mLayoutAll.layout[mLayoutAll.id].win[i].vid;
+        if (vid == 0) // stitch
+        {
+            int j;
+            for (j=0; j<IPC_CFG_STITCH_CNT; j++)
+            {
+                if (0 == mIpcCfgAll.ipc_sti[j].url[0])
+                    break;
+                urls[j] = mIpcCfgAll.ipc_sti[j].url;
+            }
+            mWidgetList[i]->startPlay(urls, j);
+        } //if (vid == 0) // stitch
+        else
+        {
+            Q_ASSERT(vid < 2+IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT);
+            if (vid < 2+IPC_CFG_STITCH_CNT)
+                urls[0] = mIpcCfgAll.ipc_sti[vid-2].url;
+            else
+                urls[0] = mIpcCfgAll.ipc[vid-2-IPC_CFG_STITCH_CNT].url;
+            mWidgetList[i]->startPlay(urls[0]);
+        } //else
     }
     mMutex.unlock();
 }
@@ -334,14 +351,10 @@ void idsServer::idsPlayerStop(void)
     int i;
     for (i=0; i<mWinNum; i++)
     {
-        mPlayMutex[i].lock();
-
         Q_ASSERT(mWidgetList[i] != NULL);
         mWidgetList[i]->stopPlay();
         mWidgetList[i]->close();
         delete mWidgetList[i];
-
-        mPlayMutex[i].unlock();
     }
     mWinNum = 0;
     this->repaint();
@@ -355,46 +368,12 @@ void idsServer::idsPlayerRestartSlot(void)
     idsPlayerStart();
 }
 
-void idsServer::idsThreadFuncPlay(int playerId)
-{
-    mPlayMutex[playerId].lock();
-
-    int vid;
-    gchar *urls[IPC_CFG_STITCH_CNT] = {0};
-    vid = mLayoutAll.layout[mLayoutAll.id].win[playerId].vid;
-    if (vid == 0) // stitch
-    {
-        int i;
-        for (i=0; i<IPC_CFG_STITCH_CNT; i++)
-        {
-            if (0 == mIpcCfgAll.ipc_sti[i].url[0])
-                break;
-            urls[i] = mIpcCfgAll.ipc_sti[i].url;
-        }
-        mWidgetList[playerId]->startPlay(urls, i);
-    } //if (vid == 0) // stitch
-    else
-    {
-        Q_ASSERT(vid < 2+IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT);
-        if (vid < 2+IPC_CFG_STITCH_CNT)
-            urls[0] = mIpcCfgAll.ipc_sti[vid-2].url;
-        else
-            urls[0] = mIpcCfgAll.ipc[vid-2-IPC_CFG_STITCH_CNT].url;
-        mWidgetList[playerId]->startPlay(urls[0]);
-    } //else
-    mPlayMutex[playerId].unlock();
-}
-
 void idsServer::idsPlayerHideSlot(void)
 {
     mMutex.lock();
     int i;
     for (i=0; i<mWinNum; i++)
-    {
-        mPlayMutex[i].lock();
         mWidgetList[i]->hide();
-        mPlayMutex[i].unlock();
-    }
     mMutex.unlock();
 }
 
@@ -403,11 +382,7 @@ void idsServer::idsPlayerShowSlot(void)
     mMutex.lock();
     int i;
     for (i=0; i<mWinNum; i++)
-    {
-        mPlayMutex[i].lock();
         mWidgetList[i]->show();
-        mPlayMutex[i].unlock();
-    }
     mMutex.unlock();
 }
 

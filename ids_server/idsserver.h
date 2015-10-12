@@ -15,16 +15,6 @@
 #include <QThread>
 #include "videowidget.h"
 
-class PlayThread : public QThread
-{
-     Q_OBJECT
-protected:
-     void run();
-public:
-     void *mPriv;
-     int mPlayerid;
-};
-
 namespace Ui {
 class idsServer;
 }
@@ -37,7 +27,6 @@ public:
     explicit idsServer(QWidget *parent = 0);
     void contextMenuEvent(QContextMenuEvent *);
     ~idsServer();
-    void idsThreadFuncPlay(int);
 
     gpointer                   mIdsEndpoint;
     int                             mMsgRet;
@@ -49,7 +38,6 @@ public:
 
 signals:
     void idsPlayerRestart();
-    void idsPlayerStartOne(int);
     void idsPlayerHide();
     void idsPlayerShow();
 
@@ -92,8 +80,6 @@ private:
 
     int                 mWinNum;
     VideoWidget         *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
-    PlayThread          mPlayThread[IDS_LAYOUT_WIN_MAX_NUM];
-    QMutex              mPlayMutex[IDS_LAYOUT_WIN_MAX_NUM];
 
     QMutex              mMutex;
 };

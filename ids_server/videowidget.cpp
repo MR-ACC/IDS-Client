@@ -1,44 +1,11 @@
 #include "videowidget.h"
 
-void videowidget_render_frame_cb(gpointer priv, ImageInfo *piinfo)
-{
-    VideoWidget *window = (VideoWidget *)priv;
+void PlayerThread::run() {
+    ((VideoWidget *)mPriv)->playerThreadFunc();
+}
 
-    if (false == window->mImgMutex.tryLock())
-        return;
-
-    window->mUpdateFlag = true;
-    window->mImgInfoClone.img_flag = piinfo->img_flag;
-
-    if (piinfo->img_flag == CV_IMG_TYPE_DEFAULT)
-    {
-        window->mImgInfoClone.fmt = piinfo->fmt;
-         window->mImgInfoClone.width = piinfo->width;
-        window->mImgInfoClone.height = piinfo->height;
-        window->mImgInfoClone.linesize = piinfo->linesize;
-        if (window->mImgInfoClone.buf == NULL)
-            window->mImgInfoClone.buf = (unsigned char *)malloc(window->mImgInfoClone.linesize * window->mImgInfoClone.height);
-        memcpy(window->mImgInfoClone.buf, piinfo->buf, window->mImgInfoClone.linesize * window->mImgInfoClone.height);
-    }
-    else if (piinfo->img_flag == CV_IMG_TYPE_OPENCV_CPU)
-    {
-        qDebug () << __func__ << __LINE__ << "error. bad use (old version). do not use CV_IMG_TYPE_OPENCV_CPU img_flag.";
-        Q_ASSERT(0);
-    }
-    else if (piinfo->img_flag == CV_IMG_TYPE_OPENCV_CUDA_GPU)
-    {
-#ifdef HAVE_OPENCV_CUDA
-//        if (window->mImgInfoClone.cv_img == NULL)
-//            window->mImgInfoClone.cv_img = (gpointer)new GpuMat(((GpuMat *)piinfo->cv_img)->size(), CV_8UC3);
-//        ((GpuMat *)piinfo->cv_img)->copyTo(*(GpuMat *)(window->mImgInfoClone.cv_img));
-        window->mImgInfoClone.cv_img = piinfo->cv_img;
-#else
-        qDebug () << __func__ << __LINE__ << "VIDEOWIDGET is compiled without opencv cuda support.";
-        Q_ASSERT(0);
-#endif
-    }
-
-    window->mImgMutex.unlock();
+void videowidget_render_frame_cb(gpointer priv, ImageInfo *piinfo) {
+    ((VideoWidget *)priv)->frameCallbackFunc(piinfo);
 }
 
 #ifdef HAVE_OPENCV_OPENGL
@@ -55,13 +22,14 @@ VideoWidget::VideoWidget(QWidget *parent) :
     this->setPalette(palette);
     this->setAutoFillBackground(true);
 
+    connect(this, SIGNAL(playStatusChanged(QString)), this, SLOT(playStatusChangedSlot(QString)));
+
     mUpdateFlag = false;
     mImgInfoClone.buf = NULL;
     mImgInfoClone.cv_img = NULL;
 
     mPlayer = NULL;
-    mStatusText = QString("连接中...");
-    connect(&mTimer, SIGNAL(timeout()), this, SLOT(renderOneFrame()));
+    connect(&mTimer, SIGNAL(timeout()), this, SLOT(renderFrameSlot()));
     mTimer.start(TIME_PER_FRAME);
 
 #ifdef HAVE_OPENCV_OPENGL
@@ -113,68 +81,57 @@ void VideoWidget::startPlay(gchar *rtsp_urls[], gint nums)
 
 void VideoWidget::startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags, gint player_flags, gint draw_fmt)
 {
-    Q_ASSERT(mPlayer == NULL);
-    if (nums < 1)
-        mStatusText = "路径无效";
-    else
+    mNums = nums;
+    if (mNums < 1)
     {
-        gchar urls[IPC_CFG_STITCH_CNT][256];
-        int i;
-        WindowInfo winfo[IPC_CFG_STITCH_CNT];
-        for (i=0; i<nums; i++)
-        {
-            strcpy(urls[i], rtsp_urls[i]);
-            winfo[i].media_url = urls[i];
-            winfo[i].win_w = width()/16*16; //fixme.
-            winfo[i].win_h = height();
-            winfo[i].win_id = GUINT_TO_POINTER(winId());
-            winfo[i].win_id = GUINT_TO_POINTER(winId()); //hack.... do not delete me!!!
-            winfo[i].win_id = GUINT_TO_POINTER(winId()); //hack.... do not delete me!!!
-            winfo[i].flags = win_flags;
-            winfo[i].draw_fmt = draw_fmt;
-            if (draw_fmt == IDS_FMT_YUV420P)
-            {
-                winfo[i].draw = 0;
-                winfo[i].priv = 0;
-            }
-            else
-            {
-                winfo[i].draw = videowidget_render_frame_cb;
-                winfo[i].priv = this;
-            }
-        }
-
-        int ret = ids_play_stream(&winfo[0], nums, player_flags, NULL, this, &mPlayer);
-        if (ret < nums)
-        {
-            if (ret > 0) //ret > 0 but ret <nums means stitching failed, some of the urls is not actived.
-            {
-                Q_ASSERT(mPlayer != NULL);
-                ids_stop_stream(mPlayer);
-                mPlayer = NULL;
-            }
-            mStatusText = QString("连接失败");
-            for (i=0; i<nums; i++)
-            {
-                mStatusText += QString("\n");
-                mStatusText += QString(rtsp_urls[i]);
-            }
-        }
-        else
-            mStatusText = QString("");
+        mStatusText = "路径无效";
+        repaint();
+        return;
     }
 
-    this->update();
+    mPlayerFlags = player_flags;
+    int i;
+    mStatusText = QString("连接中...");
+    for (i=0; i<mNums; i++)
+    {
+        mStatusText += QString("\n") + QString(rtsp_urls[i]);
+
+        strcpy(mUrls[i], rtsp_urls[i]);
+        mWinfo[i].media_url = mUrls[i];
+        mWinfo[i].win_w = width()/16*16; //fixme.
+        mWinfo[i].win_h = height();
+        mWinfo[i].win_id = GUINT_TO_POINTER(winId());
+        mWinfo[i].win_id = GUINT_TO_POINTER(winId()); //hack.... do not delete me!!!
+        mWinfo[i].win_id = GUINT_TO_POINTER(winId()); //hack.... do not delete me!!!
+        mWinfo[i].flags = win_flags;
+        mWinfo[i].draw_fmt = draw_fmt;
+        if (draw_fmt == IDS_FMT_YUV420P)
+        {
+            mWinfo[i].draw = 0;
+            mWinfo[i].priv = 0;
+        }
+        else
+        {
+            mWinfo[i].draw = videowidget_render_frame_cb;
+            mWinfo[i].priv = this;
+        }
+    }
+    repaint();
+
+    mPlayerThread.mPriv = (void *)this;
+    mPlayerThread.start();
 }
 
 void VideoWidget::stopPlay()
 {
+    mMutex.lock();
     mTimer.stop();
     if (mPlayer != NULL)
     {
         ids_stop_stream(mPlayer);
         mPlayer = NULL;
     }
+    mMutex.unlock();
 }
 
 void VideoWidget::paintEvent(QPaintEvent* event)
@@ -219,7 +176,52 @@ void VideoWidget::paintEvent(QPaintEvent* event)
 #endif
 }
 
-void VideoWidget::renderOneFrame()
+void VideoWidget::frameCallbackFunc(ImageInfo *piinfo)
+{
+    mMutex.lock();
+
+    if (false == mImgMutex.tryLock())
+    {
+        mMutex.unlock();
+        return;
+    }
+
+    mUpdateFlag = true;
+    mImgInfoClone.img_flag = piinfo->img_flag;
+
+    if (piinfo->img_flag == CV_IMG_TYPE_DEFAULT)
+    {
+        mImgInfoClone.fmt = piinfo->fmt;
+         mImgInfoClone.width = piinfo->width;
+        mImgInfoClone.height = piinfo->height;
+        mImgInfoClone.linesize = piinfo->linesize;
+        if (mImgInfoClone.buf == NULL)
+            mImgInfoClone.buf = (unsigned char *)malloc(mImgInfoClone.linesize * mImgInfoClone.height);
+        memcpy(mImgInfoClone.buf, piinfo->buf, mImgInfoClone.linesize * mImgInfoClone.height);
+    }
+    else if (piinfo->img_flag == CV_IMG_TYPE_OPENCV_CPU)
+    {
+        qDebug () << __func__ << __LINE__ << "error. bad use (old version). do not use CV_IMG_TYPE_OPENCV_CPU img_flag.";
+        Q_ASSERT(0);
+    }
+    else if (piinfo->img_flag == CV_IMG_TYPE_OPENCV_CUDA_GPU)
+    {
+#ifdef HAVE_OPENCV_CUDA
+//        if (mImgInfoClone.cv_img == NULL)
+//            mImgInfoClone.cv_img = (gpointer)new GpuMat(((GpuMat *)piinfo->cv_img)->size(), CV_8UC3);
+//        ((GpuMat *)piinfo->cv_img)->copyTo(*(GpuMat *)(mImgInfoClone.cv_img));
+        mImgInfoClone.cv_img = piinfo->cv_img;
+#else
+        qDebug () << __func__ << __LINE__ << "VIDEOWIDGET is compiled without opencv cuda support.";
+        Q_ASSERT(0);
+#endif
+    }
+    mImgMutex.unlock();
+
+    mMutex.unlock();
+}
+
+void VideoWidget::renderFrameSlot()
 {
     if (false == mImgMutex.tryLock())
         return;
@@ -260,6 +262,41 @@ void VideoWidget::renderOneFrame()
         }
     }
     mImgMutex.unlock();
+}
+
+void VideoWidget::playerThreadFunc()
+{
+    Q_ASSERT(mPlayer == NULL);
+    mMutex.lock();
+    QString status;
+    int ret = ids_play_stream(&mWinfo[0], mNums, mPlayerFlags, NULL, this, &mPlayer);
+    if (ret < mNums)
+    {
+        if (ret > 0) //ret > 0 but ret <nums means stitching failed, some of the urls is not actived.
+        {
+            Q_ASSERT(mPlayer != NULL);
+            ids_stop_stream(mPlayer);
+            mPlayer = NULL;
+        }
+        status = QString("连接失败");
+        int i;
+        for (i=0; i<mNums; i++)
+        {
+            status += QString("\n");
+            status += QString(mUrls[i]);
+        }
+    }
+    else
+        status = QString("");
+
+    emit playStatusChanged(status);
+    mMutex.unlock();
+}
+
+void VideoWidget::playStatusChangedSlot(QString status)
+{
+    mStatusText = status;
+    update();
 }
 
 #ifdef HAVE_OPENCV_OPENGL

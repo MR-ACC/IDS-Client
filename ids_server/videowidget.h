@@ -1,8 +1,8 @@
 #ifndef VIDEOWIDGET_H
 #define VIDEOWIDGET_H
 
-#define HAVE_OPENCV_OPENGL
-#define HAVE_OPENCV_CUDA
+//#define HAVE_OPENCV_OPENGL
+//#define HAVE_OPENCV_CUDA
 
 #define TIME_PER_FRAME 30
 
@@ -30,7 +30,14 @@
     #endif
 #endif
 
-void video_widget_frame_cb(gpointer priv, ImageInfo *piinfo);
+class PlayerThread : public QThread
+{
+     Q_OBJECT
+protected:
+     void run();
+public:
+     void *mPriv;
+};
 
 #ifdef HAVE_OPENCV_OPENGL
 class VideoWidget : public QGLWidget {
@@ -47,17 +54,34 @@ public:
     void startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags, gint player_flags, gint draw_fmt);
     void stopPlay();
 
-    bool            mUpdateFlag;
-    ImageInfo       mImgInfoClone;
-    QMutex          mImgMutex;
-    IdsPlayer       *mPlayer;
-    QString         mStatusText;
-    QTimer          mTimer;
+    void frameCallbackFunc(ImageInfo *);
+    void playerThreadFunc();
+
+signals:
+    void playStatusChanged(QString);
 
 protected:
     void paintEvent(QPaintEvent* event);
+
 private slots:
-    void renderOneFrame();
+    void renderFrameSlot();
+    void playStatusChangedSlot(QString);
+private:
+    bool            mUpdateFlag;
+    ImageInfo       mImgInfoClone;
+    QMutex          mImgMutex;
+
+    QTimer          mTimer;
+    QString         mStatusText;
+
+    IdsPlayer       *mPlayer;
+    gchar           mUrls[IPC_CFG_STITCH_CNT][256];
+    WindowInfo      mWinfo[IPC_CFG_STITCH_CNT];
+    gint            mNums;
+    gint            mPlayerFlags;
+
+    PlayerThread    mPlayerThread;
+    QMutex          mMutex;
 
 #ifdef HAVE_OPENCV_OPENGL
 protected:
