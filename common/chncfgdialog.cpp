@@ -75,11 +75,15 @@ void ChnCfgDialog::on_buttonBox_accepted()
     for (i=0; i<IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT; i++)
     {
         char *url = this->ui->tableWidget->item(i,0)->text().toLatin1().data();
+        if (i < IPC_CFG_STITCH_CNT)
         {
-            if (i < IPC_CFG_STITCH_CNT)
-                memcpy(mIpcCfgAll.ipc_sti[i].url, url, MIN(strlen(url), 255));
-            else
-                memcpy(mIpcCfgAll.ipc[i-IPC_CFG_STITCH_CNT].url, url, MIN(strlen(url), 255));
+            memcpy(mIpcCfgAll.ipc_sti[i].url, url, MIN(strlen(url)+1, 256));
+            mIpcCfgAll.ipc_sti[i].url[255] = 0;
+        }
+        else
+        {
+            memcpy(mIpcCfgAll.ipc[i-IPC_CFG_STITCH_CNT].url, url, MIN(strlen(url)+1, 256));
+            mIpcCfgAll.ipc[i-IPC_CFG_STITCH_CNT].url[255] = 0;
         }
     }
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SET_IPC_CFG, -1,
