@@ -18,7 +18,8 @@ public:
 
     char mIp[32];
     gpointer mIdsEndpoint;
-
+    int                             mMsgRet;
+    IdsServerInfo          mServerInfo;
 private slots:
     void on_pushButton_connect_clicked();
     void on_pushButton_netcfg_clicked();
@@ -32,6 +33,14 @@ private slots:
     void on_pushButton_layoutcfg_clicked();
 
     void on_pushButton_stitch_clicked();
+
+    void setbtnEnable(bool enable);
+
+    void on_pushButton_serverReboot_clicked();
+
+    void on_pushButton_serverShutdown_clicked();
+
+    void on_pushButton_layoutSwitch_clicked();
 
 signals:
     void connect_network(int);

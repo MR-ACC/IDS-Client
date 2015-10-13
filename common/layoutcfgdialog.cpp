@@ -614,6 +614,13 @@ void layoutCfgDialog::on_btnDel_clicked()
     if(rb == QMessageBox::Yes && mlayout.num > 0)
     {
         mlayout.num--;
+        if(this->ui->comboBoxLayoutList->currentIndex() == mlayout.id && this->ui->comboBoxLayoutList->count() != 1)
+            mlayout.id = 0;
+        else if(this->ui->comboBoxLayoutList->currentIndex() < mlayout.id)
+            mlayout.id -= 1;
+        else if(this->ui->comboBoxLayoutList->count() == 1)
+            mlayout.id = -1;
+
         //qDebug()<<"mlayout.num"<<mlayout.num<<this->ui->comboBoxLayoutList->currentIndex();
         for(int i = this->ui->comboBoxLayoutList->currentIndex(); i < mlayout.num; i++)
         {
@@ -670,6 +677,8 @@ int layoutCfgDialog::idsUpdate(gpointer endpoint)
     }
     for(int i = 0; i < mlayout.num; i++)
         this->ui->comboBoxLayoutList->addItem(QString(mlayout.layout[i].name));
+    if(mlayout.id >= 0)
+        this->ui->comboBoxLayoutList->setCurrentIndex(mlayout.id);
     return 1;
 }
 

@@ -74,8 +74,8 @@ static void server_info_get_cb(gpointer buf, gint buf_size, gpointer priv)
     }
     else
     {
-        IdsServerInfo *ipc_cfg_all = (IdsServerInfo *)buf;
-        ((idsServer *)priv)->mServerInfo = *ipc_cfg_all;
+        IdsServerInfo *ids_server_info = (IdsServerInfo *)buf;
+        ((idsServer *)priv)->mServerInfo = *ids_server_info;
         ((idsServer *)priv)->mMsgRet = MSG_EXECUTE_OK;
     }
 }
@@ -468,7 +468,7 @@ void idsServer::rebootSlot(void)
     {
         idsPlayerStop();
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_REBOOT, -1,
-                               &mLayoutAll, sizeof(IdsLayoutAll), ids_set_cb, (void*)this, 1);
+                               NULL, 0, ids_set_cb, (void*)this, 1);
         if (mMsgRet != MSG_EXECUTE_OK)
             qDebug() << QString().sprintf("ids cmd reboot error. code = %d.", mMsgRet);
     }
@@ -488,7 +488,7 @@ void idsServer::shutdownSlot(void)
     {
         idsPlayerStop();
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_SHUTDOWN, -1,
-                               &mLayoutAll, sizeof(IdsLayoutAll), ids_set_cb, (void*)this, 1);
+                               NULL, 0, ids_set_cb, (void*)this, 1);
         if (mMsgRet != MSG_EXECUTE_OK)
             qDebug() << QString().sprintf("ids cmd shut down error. code = %d.", mMsgRet);
     }

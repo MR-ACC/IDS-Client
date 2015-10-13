@@ -4,6 +4,7 @@
 #include "../common/chncfgdialog.h"
 #include "../common/netcfgdialog.h"
 #include "../common/layoutcfgdialog.h"
+#include "layoutswitchdialog.h"
 #include "upgradedialog.h"
 #include "stitchdialog.h"
 #include <QDebug>
@@ -18,6 +19,42 @@ void ids_io_fin_cb(gpointer priv)
         ((idsclient*)priv)->mIdsEndpoint = NULL;  //lock mIdsEndpoint before use it???
         emit ((idsclient*)priv)->connect_network(1);
     }
+}
+
+static void server_info_get_cb(gpointer buf, gint buf_size, gpointer priv)
+{
+    if (sizeof(IdsServerInfo) != buf_size)
+    {
+        Q_ASSERT (buf_size == sizeof(IdsResponse));
+        ((idsclient *)priv)->mMsgRet = ((IdsResponse*)buf)->ret;
+    }
+    else
+    {
+        IdsServerInfo *ids_server_info= (IdsServerInfo *)buf;
+        ((idsclient *)priv)->mServerInfo = *ids_server_info;
+        ((idsclient *)priv)->mMsgRet = MSG_EXECUTE_OK;
+    }
+}
+
+static void ids_set_cb(gpointer buf, gint buf_size, gpointer priv)
+{
+    Q_ASSERT(buf_size == sizeof(IdsResponse));
+    IdsResponse *pres = (IdsResponse *)buf;
+    Q_ASSERT(pres->magic == IDS_RESPONSE_MAGIC);
+    ((idsclient *)priv)->mMsgRet = pres->ret;
+}
+
+void idsclient::setbtnEnable(bool enable)
+{
+    this->ui->pushButton_chncfg->setEnabled(enable);
+    this->ui->pushButton_dispcfg->setEnabled(enable);
+    this->ui->pushButton_layoutcfg->setEnabled(enable);
+    this->ui->pushButton_netcfg->setEnabled(enable);
+    this->ui->pushButton_stitch->setEnabled(enable);
+    this->ui->pushButton_layoutSwitch->setEnabled(enable);
+    this->ui->pushButton_serverShutdown->setEnabled(enable);
+    this->ui->pushButton_serverReboot->setEnabled(enable);
+    //this->ui->pushButton_upgrade->setEnabled(enable);
 }
 
 idsclient::idsclient(QWidget *parent) :
@@ -39,12 +76,7 @@ QApplication::setFont(QFont("Times New Roman",14));
     QDesktopWidget* desktop = QApplication::desktop();
     move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
 
-    this->ui->pushButton_chncfg->setEnabled(false);
-    this->ui->pushButton_dispcfg->setEnabled(false);
-    this->ui->pushButton_layoutcfg->setEnabled(false);
-    this->ui->pushButton_netcfg->setEnabled(false);
-    this->ui->pushButton_stitch->setEnabled(false);
-    //this->ui->pushButton_upgrade->setEnabled(false);
+    setbtnEnable(false);
 }
 
 idsclient::~idsclient()
@@ -62,7 +94,10 @@ void idsclient::connect_server(int prompt_first)
                            , "网络断开，是否重新连接？"
                            , QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
         if(rb != QMessageBox::Yes)
+        {
+            setbtnEnable(false);
             return ;
+        }
     }
 
     if (mIdsEndpoint != NULL) {
@@ -73,15 +108,27 @@ void idsclient::connect_server(int prompt_first)
 
     mIdsEndpoint = ids_create_remote_endpoint(mIp, SERVER_PORT, ids_io_fin_cb, this, NULL);
     if (NULL == mIdsEndpoint)
+    {
+        setbtnEnable(false);
         QMessageBox::critical(NULL, tr("错误"), QString().sprintf("连接服务器(%s)失败.", mIp));
+    }
     else
     {
-        this->ui->pushButton_chncfg->setEnabled(true);
-        this->ui->pushButton_dispcfg->setEnabled(true);
-        this->ui->pushButton_layoutcfg->setEnabled(true);
-        this->ui->pushButton_netcfg->setEnabled(true);
-        this->ui->pushButton_stitch->setEnabled(true);
-        this->ui->pushButton_upgrade->setEnabled(true);
+        setbtnEnable(true);
+        ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_SERVER_INFO, -1,
+                               NULL, 0, server_info_get_cb, (void*)this, 2);
+        if (mMsgRet != MSG_EXECUTE_OK)
+        {
+             ui->label_serverInfo->setText("获取服务器系统信息失败!");
+            qDebug() << QString().sprintf("ids cmd set server info error. code = %d.", mMsgRet);
+        }
+        else
+        {
+            QString sys_ver = QString(tr("服务器系统版本:")) + QString(mServerInfo.sys_ver);
+            QString soft_ver = QString(tr("服务器软件版本:")) + QString(mServerInfo.soft_ver);
+//            QMessageBox::about(this, tr("关于"), tr("视频拼接服务器\n") + sys_ver + soft_ver);
+            ui->label_serverInfo->setText(sys_ver + soft_ver);
+        }
         QMessageBox::information(NULL, tr("提示"), QString().sprintf("连接服务器(%s)成功.", mIp));
     }
 }
@@ -195,4 +242,61 @@ void idsclient::on_pushButton_stitch_clicked()
         return ;
     }
     stitchdlg.exec();
+}
+
+void idsclient::on_pushButton_serverReboot_clicked()
+{
+    QMessageBox *msgBox = new QMessageBox(QMessageBox::Warning
+                                          , tr("警告")
+                                          , tr("是否确认重启服务器?")
+                                          , QMessageBox::Yes | QMessageBox::No
+                                          , NULL);
+    msgBox->setWindowFlags(Qt::FramelessWindowHint);
+    if (msgBox->exec() == QMessageBox::Yes)
+    {
+        ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_REBOOT, -1,
+                               NULL, 0, ids_set_cb, (void*)this, 1);
+        if (mMsgRet != MSG_EXECUTE_OK)
+            qDebug() << QString().sprintf("ids cmd reboot error. code = %d.", mMsgRet);
+    }
+
+    delete msgBox;
+}
+
+void idsclient::on_pushButton_serverShutdown_clicked()
+{
+    QMessageBox *msgBox = new QMessageBox(QMessageBox::Warning
+                                          , tr("警告")
+                                          , tr("是否确认关闭服务器?")
+                                          , QMessageBox::Yes | QMessageBox::No
+                                          , NULL);
+    msgBox->setWindowFlags(Qt::FramelessWindowHint);
+    if (msgBox->exec() == QMessageBox::Yes)
+    {
+        ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_SHUTDOWN, -1,
+                               NULL, 0, ids_set_cb, (void*)this, 1);
+        if (mMsgRet != MSG_EXECUTE_OK)
+            qDebug() << QString().sprintf("ids cmd shut down error. code = %d.", mMsgRet);
+    }
+
+    delete msgBox;
+}
+
+void idsclient::on_pushButton_layoutSwitch_clicked()
+{
+    if (mIdsEndpoint == NULL)
+    {
+        QMessageBox::information(NULL, tr("提示"), tr("请先连接服务器！"));
+        return ;
+    }
+    int ret;
+    layoutSwitchDialog layoutSwitchDlg;
+    ret = layoutSwitchDlg.idsUpdate(mIdsEndpoint);
+    if (!ret)
+    {
+        QMessageBox::critical(NULL, tr("错误"), "获取布局信息失败！");
+        return ;
+    }
+
+    layoutSwitchDlg.exec();
 }

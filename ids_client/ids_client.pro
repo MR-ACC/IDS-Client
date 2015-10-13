@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     upgradedialog.cpp \
     upgradethread.cpp \
     ../common/layoutcfgdialog.cpp \
-    stitchdialog.cpp
+    stitchdialog.cpp \
+    layoutswitchdialog.cpp
 
 HEADERS  += idsclient.h \
     ../common/displaycfgdialog.h \
@@ -29,7 +30,8 @@ HEADERS  += idsclient.h \
     upgradedialog.h \
     upgradethread.h \
     ../common/layoutcfgdialog.h \
-    stitchdialog.h
+    stitchdialog.h \
+    layoutswitchdialog.h
 
 FORMS    += idsclient.ui \
     ../common/displaycfgdialog.ui \
@@ -37,7 +39,8 @@ FORMS    += idsclient.ui \
     ../common/chncfgdialog.ui \
     upgradedialog.ui \
     ../common/layoutcfgdialog.ui \
-    stitchdialog.ui
+    stitchdialog.ui \
+    layoutswitchdialog.ui
 
 
 unix {
