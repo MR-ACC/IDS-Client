@@ -143,6 +143,23 @@ layoutCfgDialog::~layoutCfgDialog()
     delete ui;
 }
 
+int layoutCfgDialog::calcTextSize(int w, int h)
+{
+   // qDebug()<<"w"<<w;
+    if(w < 50)
+        return 3;
+    else if(w < 80)
+        return 7;
+    else if(w < 100)
+        return 12;
+    else if(w < 200)
+        return 18;
+    else if(w < 300)
+        return 22;
+    else
+        return 24;
+}
+
 void layoutCfgDialog::paintEvent(QPaintEvent *event)
 {
 
@@ -152,8 +169,8 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
     int h = 0;
     int endX, endY;
 
-    x = MIN(lastPoint.x(), endPoint.x());
-    y = MIN(lastPoint.y(), endPoint.y());
+    x = MAX(MIN(lastPoint.x(), endPoint.x()), 0);
+    y = MAX(MIN(lastPoint.y(), endPoint.y()), 0);
 
     endX = MAX(lastPoint.x(), endPoint.x());
     if(endX > this->width())
@@ -199,7 +216,7 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
             int drawW = ((x+w-1)/minWidth + 1) - drawX;
             int drawH = ((y+h-1)/minWidth + 1) - drawY;
             pp.setPen(*mPenNotSelected); //设置画笔形式
-            qDebug()<<drawX<<drawY<<drawW<<drawH<<minWidth;
+            //qDebug()<<drawX<<drawY<<drawW<<drawH<<minWidth;
             int coverFlag = 0;
             for(int i = drawY; i < (drawY+drawH); i++)
             {
@@ -240,11 +257,11 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
                 QRect rect(drawX*minWidth + 2,drawY*minWidth + 2,drawW*minWidth - 4,drawH*minWidth - 4);
                 pp.setPen(*mPenSelected); //设置画笔形式
                 pp.drawRect(rect);
-                pp.setFont(QFont("Times New Roman",22,QFont::Bold));
+                pp.setFont(QFont("Times New Roman",calcTextSize(drawW*minWidth - 4, drawH*minWidth - 4),QFont::Bold));
                 pp.drawText(rect, Qt::AlignCenter, mVidList[mlayout.layout[mlayout.num].win[mWinCount].vid]);
 
                 mCurSelectedWin = mWinCount;
-                qDebug()<<"mlayout.num: "<<mlayout.num<<"  mWinCount: "<<mWinCount<<"  vid: "<<mlayout.layout[mlayout.num].win[mWinCount].vid;
+                //qDebug()<<"mlayout.num: "<<mlayout.num<<"  mWinCount: "<<mWinCount<<"  vid: "<<mlayout.layout[mlayout.num].win[mWinCount].vid;
 
                 for(int i = 0; i < mWinCount; i++)
                 {
@@ -256,7 +273,7 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
                     QRect rect(drawX*minWidth + 1,drawY*minWidth + 1,drawW*minWidth - 2,drawH*minWidth - 2);
                     pp.setPen(*mPenNotSelected); //设置画笔形式
                     pp.drawRect(rect);
-                    pp.setFont(QFont("Times New Roman",22,QFont::Bold));
+                    pp.setFont(QFont("Times New Roman",calcTextSize(drawW*minWidth - 2, drawH*minWidth - 2),QFont::Bold));
                     pp.drawText(rect, Qt::AlignCenter, mVidList[mlayout.layout[mlayout.num].win[i].vid]);
                 }
                 mWinCount++;
@@ -276,7 +293,7 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
                 QRect rect(drawX*minWidth + 1,drawY*minWidth + 1,drawW*minWidth - 2,drawH*minWidth - 2);
                 pp.setPen(*mPenNotSelected); //设置画笔形式
                 pp.drawRect(rect);
-                pp.setFont(QFont("Times New Roman",22,QFont::Bold));
+                pp.setFont(QFont("Times New Roman",calcTextSize(drawW*minWidth - 2, drawH*minWidth - 2),QFont::Bold));
                 pp.drawText(rect, Qt::AlignCenter, mVidList[mlayout.layout[mCurSelectedLayout].win[i].vid]);
             }
             isLayoutSwitch = false;
@@ -309,7 +326,7 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
                     QRect rect(drawX*minWidth + 2,drawY*minWidth + 2,drawW*minWidth - 4,drawH*minWidth - 4);
                     pp.setPen(*mPenSelected); //设置画笔形式
                     pp.drawRect(rect);
-                    pp.setFont(QFont("Times New Roman",22,QFont::Bold));
+                    pp.setFont(QFont("Times New Roman",calcTextSize(drawW*minWidth - 4, drawH*minWidth - 4),QFont::Bold));
                     pp.drawText(rect, Qt::AlignCenter, mVidList[mlayout.layout[mCurSelectedLayout].win[i].vid]);
 
                     mCurSelectedWin = i;
@@ -320,7 +337,7 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
                     QRect rect(drawX*minWidth + 1,drawY*minWidth + 1,drawW*minWidth - 2,drawH*minWidth - 2);
                     pp.setPen(*mPenNotSelected); //设置画笔形式
                     pp.drawRect(rect);
-                    pp.setFont(QFont("Times New Roman",22,QFont::Bold));
+                    pp.setFont(QFont("Times New Roman",calcTextSize(drawW*minWidth - 2, drawH*minWidth - 2),QFont::Bold));
                     pp.drawText(rect, Qt::AlignCenter, mVidList[mlayout.layout[mCurSelectedLayout].win[i].vid]);
 
                 }
@@ -337,14 +354,14 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
                 int drawY = mlayout.layout[mCurSelectedLayout].win[i].y;
                 int drawW = mlayout.layout[mCurSelectedLayout].win[i].w;
                 int drawH = mlayout.layout[mCurSelectedLayout].win[i].h;
-                qDebug()<<endPoint.x()<<endPoint.y()<<drawX<<drawY<<drawW<<drawH;
+                //qDebug()<<endPoint.x()<<endPoint.y()<<drawX<<drawY<<drawW<<drawH;
                 if(i == mCurSelectedWin)
                 {
                     //qDebug()<<"in";
                     QRect rect(drawX*minWidth + 2,drawY*minWidth + 2,drawW*minWidth - 4,drawH*minWidth - 4);
                     pp.setPen(*mPenSelected); //设置画笔形式
                     pp.drawRect(rect);
-                    pp.setFont(QFont("Times New Roman",22,QFont::Bold));
+                    pp.setFont(QFont("Times New Roman",calcTextSize(drawW*minWidth - 4, drawH*minWidth - 4),QFont::Bold));
                     pp.drawText(rect, Qt::AlignCenter, mVidList[mlayout.layout[mCurSelectedLayout].win[i].vid]);
                 }
                 else
@@ -353,7 +370,7 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
                     QRect rect(drawX*minWidth + 1,drawY*minWidth + 1,drawW*minWidth - 2,drawH*minWidth - 2);
                     pp.setPen(*mPenNotSelected); //设置画笔形式
                     pp.drawRect(rect);
-                    pp.setFont(QFont("Times New Roman",22,QFont::Bold));
+                    pp.setFont(QFont("Times New Roman",calcTextSize(drawW*minWidth - 2, drawH*minWidth - 2),QFont::Bold));
                     pp.drawText(rect, Qt::AlignCenter, mVidList[mlayout.layout[mCurSelectedLayout].win[i].vid]);
                 }
             }
@@ -497,7 +514,7 @@ void layoutCfgDialog::on_btnDoneNew_clicked()
         QMessageBox::information(this, tr("提示"), tr("联动窗口不能多于1"));
         return;
     }
-    qDebug()<<"on_btnDoneNew_clicked   mlayout.num: "<<mlayout.num<<"mWinCount"<<mWinCount;
+    //qDebug()<<"on_btnDoneNew_clicked   mlayout.num: "<<mlayout.num<<"mWinCount"<<mWinCount;
 
     for(int i = mWinCount; i < IDS_LAYOUT_WIN_MAX_NUM; i++)
         mlayout.layout[mlayout.num].win[i].w = 0;
@@ -541,7 +558,7 @@ void layoutCfgDialog::on_btnCancelNew_clicked()
 
 void layoutCfgDialog::on_comboBoxLayoutList_currentIndexChanged(int index)
 {
-    qDebug()<<"on_comboBoxLayoutList_currentIndexChanged"<<index;
+    //qDebug()<<"on_comboBoxLayoutList_currentIndexChanged"<<index;
     if(index < 0)
     {
         mCurSelectedLayout = 0;
@@ -554,7 +571,7 @@ void layoutCfgDialog::on_comboBoxLayoutList_currentIndexChanged(int index)
     else
     {
         mCurSelectedLayout = index;
-        qDebug()<<"mCurSelectedLayout: "<<mCurSelectedLayout;
+        //qDebug()<<"mCurSelectedLayout: "<<mCurSelectedLayout;
         isLayoutSwitch = true;
         mCurSelectedWin = -1;
         this->ui->btnModify->setEnabled(true);
@@ -597,7 +614,7 @@ void layoutCfgDialog::on_btnDel_clicked()
     if(rb == QMessageBox::Yes && mlayout.num > 0)
     {
         mlayout.num--;
-        qDebug()<<"mlayout.num"<<mlayout.num<<this->ui->comboBoxLayoutList->currentIndex();
+        //qDebug()<<"mlayout.num"<<mlayout.num<<this->ui->comboBoxLayoutList->currentIndex();
         for(int i = this->ui->comboBoxLayoutList->currentIndex(); i < mlayout.num; i++)
         {
             memcpy(&(mlayout.layout[i]), &(mlayout.layout[i+1]), sizeof(IdsLayout));
@@ -611,7 +628,7 @@ void layoutCfgDialog::on_btnDel_clicked()
 
 void layoutCfgDialog::on_comboBoxChannel_currentIndexChanged(int index)
 {
-    qDebug()<<"mCurSelectedWin: "<<mCurSelectedWin<<"  mCurSelectedLayout: "<<mCurSelectedLayout;
+    //qDebug()<<"mCurSelectedWin: "<<mCurSelectedWin<<"  mCurSelectedLayout: "<<mCurSelectedLayout;
     if(mCurSelectedWin != -1)
     {
         if(this->ui->comboBoxCameraType->currentIndex() == 0)
@@ -628,7 +645,7 @@ void layoutCfgDialog::on_comboBoxChannel_currentIndexChanged(int index)
 
 void layoutCfgDialog::msgslot(int i)
 {
-    qDebug()<<"msgslot"<<i;
+    //qDebug()<<"msgslot"<<i;
     if(i == 0)
     {
         QMessageBox::information(this, tr("提示"), tr("单个布局最多允许8个播放窗口"));
@@ -642,7 +659,7 @@ int layoutCfgDialog::idsUpdate(gpointer endpoint)
                            NULL, 0, layout_get_cb, (void*)this, 3);
     if (mMsgRet != MSG_EXECUTE_OK)
         return 0;
-    qDebug()<<"mlayout.num"<<mlayout.num;
+    //qDebug()<<"mlayout.num"<<mlayout.num;
     if(mlayout.num == 0)
     {
         for(int i = 0; i < IDS_LAYOUT_WIN_H; i++)

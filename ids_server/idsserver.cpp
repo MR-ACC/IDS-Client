@@ -10,6 +10,7 @@ static int refresh_event_handle(IdsEvent *pev, gpointer priv)
     emit ((idsServer *)priv)->idsPlayerRestart();
     return EHR_ACCEPT;
 }
+
 static int network_changed_event_handle(IdsEvent *pev, gpointer priv)
 {
     emit ((idsServer *)priv)->idsPlayerRestart();
@@ -49,14 +50,6 @@ static void layout_get_cb(gpointer buf, gint buf_size, gpointer priv)
     }
 }
 
-static void layout_set_cb(gpointer buf, gint buf_size, gpointer priv)
-{
-    Q_ASSERT(buf_size == sizeof(IdsResponse));
-    IdsResponse *pres = (IdsResponse *)buf;
-    Q_ASSERT(pres->magic == IDS_RESPONSE_MAGIC);
-    ((idsServer *)priv)->mMsgRet = pres->ret;
-}
-
 static void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
     if (sizeof(IpcCfgAll) != buf_size)
@@ -71,7 +64,6 @@ static void ipc_cfg_get_cb(gpointer buf, gint buf_size, gpointer priv)
         ((idsServer *)priv)->mMsgRet = MSG_EXECUTE_OK;
     }
 }
-
 
 static void server_info_get_cb(gpointer buf, gint buf_size, gpointer priv)
 {
@@ -88,6 +80,13 @@ static void server_info_get_cb(gpointer buf, gint buf_size, gpointer priv)
     }
 }
 
+static void ids_set_cb(gpointer buf, gint buf_size, gpointer priv)
+{
+    Q_ASSERT(buf_size == sizeof(IdsResponse));
+    IdsResponse *pres = (IdsResponse *)buf;
+    Q_ASSERT(pres->magic == IDS_RESPONSE_MAGIC);
+    ((idsServer *)priv)->mMsgRet = pres->ret;
+}
 
 idsServer::idsServer(QWidget *parent) :
     QWidget(parent),
@@ -124,9 +123,13 @@ idsServer::idsServer(QWidget *parent) :
     mAbout->setIcon(QIcon(":/image/about.ico"));
     connect(mAbout, SIGNAL(triggered()), this, SLOT(aboutSlot()));
 
-    mExit = new QAction(tr("关机"), this);
-    mExit->setIcon(QIcon(":/image/exit.ico"));
-    connect(mExit, SIGNAL(triggered()), this, SLOT(exitSlot()));
+    mReboot = new QAction(tr("重启"), this);
+    mReboot->setIcon(QIcon(":/image/reboot.ico"));
+    connect(mReboot, SIGNAL(triggered()), this, SLOT(rebootSlot()));
+
+    mShutdown = new QAction(tr("关机"), this);
+    mShutdown->setIcon(QIcon(":/image/shutdown.ico"));
+    connect(mShutdown, SIGNAL(triggered()), this, SLOT(shutdownSlot()));
 
     int i;
     mWinNum = 0;
@@ -158,7 +161,10 @@ idsServer::idsServer(QWidget *parent) :
     mMainMenu->addAction(mAbout);                   //把about项放入主菜单中
     mMainMenu->addSeparator();
     mMainMenu->addSeparator();
-    mMainMenu->addAction(mExit);
+    mMainMenu->addAction(mReboot);
+    mMainMenu->addSeparator();
+    mMainMenu->addSeparator();
+    mMainMenu->addAction(mShutdown);
     mMainMenu->addSeparator();
     mMainMenu->addSeparator();
 
@@ -196,7 +202,8 @@ idsServer::~idsServer()
     delete mSceneGroup;
     delete mSceneSwitchMenu;
     delete mMainMenu;
-    delete mExit;
+    delete mShutdown;
+    delete mReboot;
     delete mAbout;
     delete mNetCfg;
     delete mDispmodeCfg;
@@ -393,7 +400,7 @@ void idsServer::sceneSwitchSlot(void)
     {
         mLayoutAll.id = mSceneGroup->checkedAction()->whatsThis().toInt();
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SET_LAYOUT, -1,
-                               &mLayoutAll, sizeof(IdsLayoutAll), layout_set_cb, (void*)this, 1);
+                               &mLayoutAll, sizeof(IdsLayoutAll), ids_set_cb, (void*)this, 1);
         if (mMsgRet != MSG_EXECUTE_OK)
             qDebug() << QString().sprintf("ids cmd set layout cfg error. code = %d.", mMsgRet);
     }
@@ -449,18 +456,41 @@ void idsServer::aboutSlot(void)
     }
 }
 
-void idsServer::exitSlot(void)
+void idsServer::rebootSlot(void)
 {
     QMessageBox *msgBox = new QMessageBox(QMessageBox::Warning
                                           , tr("警告")
-                                          , tr("是否确认关机?")
+                                          , tr("是否确认重启服务器?")
                                           , QMessageBox::Yes | QMessageBox::No
                                           , NULL);
     msgBox->setWindowFlags(Qt::FramelessWindowHint);
     if (msgBox->exec() == QMessageBox::Yes)
     {
         idsPlayerStop();
-        QProcess::execute("shutdown -h now");
+        ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_REBOOT, -1,
+                               &mLayoutAll, sizeof(IdsLayoutAll), ids_set_cb, (void*)this, 1);
+        if (mMsgRet != MSG_EXECUTE_OK)
+            qDebug() << QString().sprintf("ids cmd reboot error. code = %d.", mMsgRet);
+    }
+
+    delete msgBox;
+}
+
+void idsServer::shutdownSlot(void)
+{
+    QMessageBox *msgBox = new QMessageBox(QMessageBox::Warning
+                                          , tr("警告")
+                                          , tr("是否确认关闭服务器?")
+                                          , QMessageBox::Yes | QMessageBox::No
+                                          , NULL);
+    msgBox->setWindowFlags(Qt::FramelessWindowHint);
+    if (msgBox->exec() == QMessageBox::Yes)
+    {
+        idsPlayerStop();
+        ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_SHUTDOWN, -1,
+                               &mLayoutAll, sizeof(IdsLayoutAll), ids_set_cb, (void*)this, 1);
+        if (mMsgRet != MSG_EXECUTE_OK)
+            qDebug() << QString().sprintf("ids cmd shut down error. code = %d.", mMsgRet);
     }
 
     delete msgBox;

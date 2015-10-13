@@ -51,7 +51,8 @@ private slots:
     void dispmodeCfgSlot(void);
     void netCfgSlot(void);
     void aboutSlot(void);
-    void exitSlot(void);
+    void rebootSlot(void);
+    void shutdownSlot(void);
 
 protected:
     void paintEvent(QPaintEvent*);
@@ -72,7 +73,8 @@ private:
     QAction             *mDispmodeCfg;
     QAction             *mNetCfg;
     QAction             *mAbout;
-    QAction             *mExit;
+    QAction             *mReboot;
+    QAction             *mShutdown;
 
     QActionGroup        *mSceneGroup;                    //用来实现子菜单选项互斥
     QAction             *mSceneList[IDS_LAYOUT_MAX_NUM];

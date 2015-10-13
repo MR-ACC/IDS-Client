@@ -274,8 +274,18 @@ void VideoWidget::playerThreadFunc()
     Q_ASSERT(mPlayer == NULL);
     mMutex.lock();
     QString status;
-    int ret = ids_play_stream(&mWinfo[0], mNums, mPlayerFlags, NULL, this, &mPlayer);
-    if (ret < mNums)
+    gint ret = -1;
+    gint playerFlags = -1;
+
+    ret = ids_play_stream(&mWinfo[0], mNums, mPlayerFlags, NULL, this, &mPlayer);
+    if (ret != 0)
+        playerFlags = ids_play_get_flags(mPlayer);
+
+    if (ret == mNums && playerFlags == mPlayerFlags) //play success
+    {
+        status = QString("");
+    }
+    else
     {
         if (ret > 0) //ret > 0 but ret <nums means stitching failed, some of the urls is not actived.
         {
@@ -283,16 +293,23 @@ void VideoWidget::playerThreadFunc()
             ids_stop_stream(mPlayer);
             mPlayer = NULL;
         }
-        status = QString("连接失败");
-        int i;
-        for (i=0; i<mNums; i++)
+
+        if (ret != mNums)
         {
-            status += QString("\n");
-            status += QString(mUrls[i]);
+            status = QString("连接失败");
+            int i;
+            for (i=0; i<mNums; i++)
+            {
+                status += QString("\n");
+                status += QString(mUrls[i]);
+            }
+        }
+        else if ( ( 0 != (mPlayerFlags & IDS_TYPE(IDS_TYPE_STITCH)) ) &&
+                     ( 0 == (playerFlags & IDS_TYPE(IDS_TYPE_STITCH)) ) )
+        {
+            status = QString("拼接视频播放失败. 请检查(更新)拼接配置文件");
         }
     }
-    else
-        status = QString("");
 
     emit playStatusChanged(status);
     mMutex.unlock();

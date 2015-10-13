@@ -53,6 +53,7 @@ void NetCfgDialog::netcfgAccept()
             strcpy(mNetInfo.mask, (const char*) ma.toLocal8Bit());
             mNetInfo.flag |= MASK_OK;
         }
+qDebug() << mNetInfo.gw;
 
         if (ga != "" ) {
             strcpy(mNetInfo.gw, (const char*) ga.toLocal8Bit());

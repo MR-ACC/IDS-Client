@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>480</height>
+    <width>792</width>
+    <height>430</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>800</width>
-    <height>480</height>
+    <width>792</width>
+    <height>430</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>800</width>
-    <height>480</height>
+    <width>792</width>
+    <height>430</height>
    </size>
   </property>
   <property name="font">
@@ -34,8 +34,8 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>25</x>
-     <y>345</y>
+     <x>14</x>
+     <y>283</y>
      <width>591</width>
      <height>125</height>
     </rect>
@@ -248,8 +248,8 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>621</x>
-     <y>352</y>
+     <x>610</x>
+     <y>290</y>
      <width>168</width>
      <height>111</height>
     </rect>

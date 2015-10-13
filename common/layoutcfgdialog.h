@@ -29,7 +29,7 @@ public:
     void mouseMoveEvent(QMouseEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
-
+    int calcTextSize(int w, int h);
     int idsUpdate(gpointer);
     gpointer                    mIdsEndpoint;
     IdsLayoutAll                mlayout;

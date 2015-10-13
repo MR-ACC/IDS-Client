@@ -8,5 +8,7 @@
         <file>image/ipc.ico</file>
         <file>image/layout.ico</file>
         <file>image/scene.ico</file>
+        <file>image/reboot.ico</file>
+        <file>image/shutdown.ico</file>
     </qresource>
 </RCC>

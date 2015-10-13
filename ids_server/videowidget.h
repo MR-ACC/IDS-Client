@@ -1,8 +1,8 @@
 #ifndef VIDEOWIDGET_H
 #define VIDEOWIDGET_H
 
-//#define HAVE_OPENCV_OPENGL
-//#define HAVE_OPENCV_CUDA
+#define HAVE_OPENCV_OPENGL
+#define HAVE_OPENCV_CUDA
 
 #define TIME_PER_FRAME 30
 

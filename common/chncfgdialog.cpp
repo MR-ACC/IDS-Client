@@ -72,21 +72,15 @@ int ChnCfgDialog::idsUpdate(gpointer endpoint)
 void ChnCfgDialog::on_buttonBox_accepted()
 {
     int i;
-    for (i=0; i<IPC_CFG_STITCH_CNT; i++)
+    for (i=0; i<IPC_CFG_STITCH_CNT+IPC_CFG_NORMAL_CNT; i++)
     {
         char *url = this->ui->tableWidget->item(i,0)->text().toLatin1().data();
-        if (url[0] == 0 || url[0] == ' ')
-            strcpy(this->mIpcCfgAll.ipc_sti[i].url, "");
-        else
-            strcpy(this->mIpcCfgAll.ipc_sti[i].url, url);
-    }
-    for (i=0; i<IPC_CFG_NORMAL_CNT; i++)
-    {
-        char *url = this->ui->tableWidget->item(i+IPC_CFG_STITCH_CNT,0)->text().toLatin1().data();
-        if (url[0] == 0 || url[0] == ' ')
-            strcpy(this->mIpcCfgAll.ipc[i].url, "");
-        else
-            strcpy(this->mIpcCfgAll.ipc[i].url, url);
+        {
+            if (i < IPC_CFG_STITCH_CNT)
+                memcpy(mIpcCfgAll.ipc_sti[i].url, url, MIN(strlen(url), 255));
+            else
+                memcpy(mIpcCfgAll.ipc[i-IPC_CFG_STITCH_CNT].url, url, MIN(strlen(url), 255));
+        }
     }
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SET_IPC_CFG, -1,
                            &mIpcCfgAll, sizeof(mIpcCfgAll), ipc_cfg_set_cb, (void*)this, 1);
