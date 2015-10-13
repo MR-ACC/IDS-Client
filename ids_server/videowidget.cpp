@@ -125,12 +125,17 @@ void VideoWidget::startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags
 void VideoWidget::stopPlay()
 {
     mMutex.lock();
+    mImgMutex.lock();
+
+    mUpdateFlag = false;
     mTimer.stop();
     if (mPlayer != NULL)
     {
         ids_stop_stream(mPlayer);
         mPlayer = NULL;
     }
+
+    mImgMutex.unlock();
     mMutex.unlock();
 }
 
