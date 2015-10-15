@@ -472,7 +472,6 @@ void idsServer::rebootSlot(void)
                                           , tr("是否确认重启服务器?")
                                           , QMessageBox::Yes | QMessageBox::No
                                           , NULL);
-    msgBox->setWindowFlags(Qt::FramelessWindowHint);
     if (msgBox->exec() == QMessageBox::Yes)
     {
         idsPlayerStop();
@@ -492,7 +491,6 @@ void idsServer::shutdownSlot(void)
                                           , tr("是否确认关闭服务器?")
                                           , QMessageBox::Yes | QMessageBox::No
                                           , NULL);
-    msgBox->setWindowFlags(Qt::FramelessWindowHint);
     if (msgBox->exec() == QMessageBox::Yes)
     {
         idsPlayerStop();
