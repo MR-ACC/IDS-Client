@@ -31,7 +31,8 @@ HEADERS  += idsclient.h \
     upgradethread.h \
     ../common/layoutcfgdialog.h \
     stitchdialog.h \
-    layoutswitchdialog.h
+    layoutswitchdialog.h \
+    ../common/idsutil.h
 
 FORMS    += idsclient.ui \
     ../common/displaycfgdialog.ui \
@@ -42,6 +43,7 @@ FORMS    += idsclient.ui \
     stitchdialog.ui \
     layoutswitchdialog.ui
 
+RC_FILE += logo.rc
 
 unix {
 ROOT_DIR = $$system(pwd)/../../

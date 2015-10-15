@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include "app_amp.h"
+#include "../common/idsutil.h"
 namespace Ui {
 class layoutSwitchDialog;
 }

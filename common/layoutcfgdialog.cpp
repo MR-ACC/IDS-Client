@@ -452,7 +452,13 @@ void layoutCfgDialog::on_btnNewLayout_clicked()
         mlayout.layout[mlayout.num].win[i].w = 0;
 
     memset(mlayout.layout[mlayout.num].name, '\0', sizeof(mlayout.layout[mlayout.num].name));
-    strcpy(mlayout.layout[mlayout.num].name, this->ui->lineEditLayoutName->text().toLatin1().data());
+
+    std::string str = this->ui->lineEditLayoutName->text().toStdString();
+    const char* inbuf = str.c_str();
+    base64_encode((guchar *)inbuf, strlen(inbuf), (guchar *)mlayout.layout[mlayout.num].name, sizeof(mlayout.layout[mlayout.num].name));
+
+    qDebug()<<mlayout.layout[mlayout.num].name;
+    //strcpy(mlayout.layout[mlayout.num].name, this->ui->lineEditLayoutName->text().toLatin1().data());
     this->ui->comboBoxLayoutList->addItem(this->ui->lineEditLayoutName->text());
     this->ui->comboBoxLayoutList->setCurrentText(this->ui->lineEditLayoutName->text());
 
@@ -676,7 +682,14 @@ int layoutCfgDialog::idsUpdate(gpointer endpoint)
             }
     }
     for(int i = 0; i < mlayout.num; i++)
-        this->ui->comboBoxLayoutList->addItem(QString(mlayout.layout[i].name));
+    {
+        char base64DecodeBuf[128];
+        memset(base64DecodeBuf, '\0', sizeof(base64DecodeBuf));
+        base64_decode((guchar *)mlayout.layout[i].name, strlen(mlayout.layout[i].name), (guchar *)base64DecodeBuf, sizeof(base64DecodeBuf));
+        QString name = QString::fromUtf8(base64DecodeBuf, strlen(base64DecodeBuf));
+        //qDebug()<<"base64_decode"<<name<<mlayout.layout[i].name;
+        this->ui->comboBoxLayoutList->addItem(name);
+    }
     if(mlayout.id >= 0)
         this->ui->comboBoxLayoutList->setCurrentIndex(mlayout.id);
     return 1;

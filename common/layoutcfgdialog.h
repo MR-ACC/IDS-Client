@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QtAlgorithms>
 #include "app_amp.h"
+#include "idsutil.h"
 
 #define MIN(x,y) ((x)<(y)?(x):(y))
 #define MAX(x,y) ((x)>(y)?(x):(y))

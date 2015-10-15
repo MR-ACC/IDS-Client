@@ -15,6 +15,7 @@
 #include <QThread>
 #include <QTimer>
 #include "videowidget.h"
+#include "../common/idsutil.h"
 
 namespace Ui {
 class idsServer;

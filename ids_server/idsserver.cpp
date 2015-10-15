@@ -260,7 +260,11 @@ void idsServer::idsSceneListCreate(void)
     int i;
     for (i=0; i<mSceneNum; i++)
     {
-        mSceneList[i] = new QAction(QString(mLayoutAll.layout[i].name), this);        //创建新的菜单项
+        char base64DecodeBuf[128];
+        memset(base64DecodeBuf, '\0', sizeof(base64DecodeBuf));
+        base64_decode((guchar *)mLayoutAll.layout[i].name, strlen(mLayoutAll.layout[i].name), (guchar *)base64DecodeBuf, sizeof(base64DecodeBuf));
+        QString name = QString::fromUtf8(base64DecodeBuf, strlen(base64DecodeBuf));
+        mSceneList[i] = new QAction(name, this);        //创建新的菜单项
         mSceneList[i]->setCheckable(true);                                                                     //属性是可选的
         mSceneList[i]->setWhatsThis(QString::number(i, 10));                                      //将该属性用来做场景ID
         connect(mSceneList[i], SIGNAL(triggered()), this, SLOT(sceneSwitchSlot()));   //该菜单项的连接信号和槽

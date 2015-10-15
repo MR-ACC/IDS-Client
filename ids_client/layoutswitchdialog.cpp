@@ -49,7 +49,14 @@ int layoutSwitchDialog::idsUpdate(gpointer endpoint)
         return 0;
 
     for(int i = 0; i < mlayout.num; i++)
-        this->ui->comboBox->addItem(QString(mlayout.layout[i].name));
+    {
+        char base64DecodeBuf[128];
+        memset(base64DecodeBuf, '\0', sizeof(base64DecodeBuf));
+        base64_decode((guchar *)mlayout.layout[i].name, strlen(mlayout.layout[i].name), (guchar *)base64DecodeBuf, sizeof(base64DecodeBuf));
+        QString name = QString::fromUtf8(base64DecodeBuf, strlen(base64DecodeBuf));
+        //qDebug()<<"base64_decode"<<name<<mlayout.layout[i].name;
+        this->ui->comboBox->addItem(name);
+    }
     if(mlayout.id >= 0)
         this->ui->comboBox->setCurrentIndex(mlayout.id);
     return 1;
