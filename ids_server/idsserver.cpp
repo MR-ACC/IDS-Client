@@ -174,6 +174,10 @@ idsServer::idsServer(QWidget *parent) :
     connect(this, SIGNAL(idsPlayerHide()), this, SLOT(idsPlayerHideSlot()));
     connect(this, SIGNAL(idsPlayerShow()), this, SLOT(idsPlayerShowSlot()));
 
+    mCursorStatus = 1;
+    connect(&mCursorTimer, SIGNAL(timeout()), this, SLOT(cursorHideSlot()));
+    mCursorTimer.start(1000*5);
+
     if (TRUE != ids_core_init())
         throw QString("ids init core library failed");
     if (TRUE != ids_modules_init())
@@ -216,10 +220,6 @@ void idsServer::closeEvent(QCloseEvent *)
 {
     ids_destroy_local_endpoint(mIdsEndpoint);
     idsPlayerStop();
-}
-
-void idsServer::showEvent(QShowEvent *)
-{
 }
 
 void idsServer::paintEvent(QPaintEvent*)
@@ -393,6 +393,15 @@ void idsServer::idsPlayerShowSlot(void)
     mMutex.unlock();
 }
 
+void idsServer::cursorHideSlot(void)
+{
+    if (mCursorStatus == 1)
+    {
+        mCursorStatus = 0;
+        QApplication::setOverrideCursor(Qt::BlankCursor);
+    }
+}
+
 void idsServer::sceneSwitchSlot(void)
 {
     mMutex.lock();
@@ -500,10 +509,16 @@ void idsServer::contextMenuEvent(QContextMenuEvent *e)
 {
     if (true == mMutex.tryLock())
     {
+        mCursorStatus = 1;
+        QApplication::setOverrideCursor(Qt::ArrowCursor);
+        mCursorTimer.stop();
+
         idsRefresh();
         idsSceneListRelease();
         idsSceneListCreate();
         mMutex.unlock();
         mMainMenu->exec(e->globalPos());                    //选择菜单弹出的位置
+
+        mCursorTimer.start(1000*10);
     }
 }

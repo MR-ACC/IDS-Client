@@ -98,9 +98,9 @@ int displayCfgDialog::idsUpdate(gpointer endpoint)
                 mMonitorInfos.monitor_infos[i].monitor_res_infos[j].h <= 0)
                 break;
 
-            const gint validResCnt = 8;
-            const gint validResW[] = {1920, 1680, 1440, 1280, 1280, 1280, 1024,  800};
-            const gint validResH[] = {1080,  1050,   900, 1024,   960,   720,   768,  600};
+            const gint validResCnt = 9;
+            const gint validResW[] = {1920, 1680, 1600,  1440, 1280, 1280, 1280, 1024,  800};
+            const gint validResH[] = {1080,  1050, 900,  900, 1024,   960,   720,   768,  600};
             for (k=0; k<validResCnt; k++)
             {
                 if (mMonitorInfos.monitor_infos[i].monitor_res_infos[j].w == validResW[k] &&

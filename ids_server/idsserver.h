@@ -13,6 +13,7 @@
 #include <QColorDialog>
 #include <QDesktopWidget>
 #include <QThread>
+#include <QTimer>
 #include "videowidget.h"
 
 namespace Ui {
@@ -45,6 +46,7 @@ private slots:
     void idsPlayerRestartSlot(void);
     void idsPlayerHideSlot(void);
     void idsPlayerShowSlot(void);
+    void cursorHideSlot(void);
     void sceneSwitchSlot(void);
     void chnCfgSlot(void);
     void layoutCfgSlot(void);
@@ -56,7 +58,6 @@ private slots:
 
 protected:
     void paintEvent(QPaintEvent*);
-    void showEvent(QShowEvent *);
     void closeEvent(QCloseEvent *);
 
 private:
@@ -84,6 +85,9 @@ private:
     VideoWidget         *mWidgetList[IDS_LAYOUT_WIN_MAX_NUM];
 
     QMutex              mMutex;
+
+    QTimer              mCursorTimer;
+    gint                mCursorStatus;
 };
 
 #endif // IDSSERVER_H
