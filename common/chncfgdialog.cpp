@@ -87,7 +87,7 @@ void ChnCfgDialog::on_buttonBox_accepted()
         }
     }
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SET_IPC_CFG, -1,
-                           &mIpcCfgAll, sizeof(mIpcCfgAll), ipc_cfg_set_cb, (void*)this, 1);
+                           &mIpcCfgAll, sizeof(mIpcCfgAll), ipc_cfg_set_cb, (void*)this, 3);
     if (mMsgRet == MSG_EXECUTE_OK)
         this->close();
     else

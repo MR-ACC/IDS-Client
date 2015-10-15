@@ -116,7 +116,7 @@ void idsclient::connect_server(int prompt_first)
     {
         setbtnEnable(true);
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_SERVER_INFO, -1,
-                               NULL, 0, server_info_get_cb, (void*)this, 2);
+                               NULL, 0, server_info_get_cb, (void*)this, 3);
         if (mMsgRet != MSG_EXECUTE_OK)
         {
              ui->label_serverInfo->setText("获取服务器系统信息失败!");
@@ -255,7 +255,7 @@ void idsclient::on_pushButton_serverReboot_clicked()
     if (msgBox->exec() == QMessageBox::Yes)
     {
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_REBOOT, -1,
-                               NULL, 0, ids_set_cb, (void*)this, 1);
+                               NULL, 0, ids_set_cb, (void*)this, 3);
         if (mMsgRet != MSG_EXECUTE_OK)
             qDebug() << QString().sprintf("ids cmd reboot error. code = %d.", mMsgRet);
     }
@@ -274,7 +274,7 @@ void idsclient::on_pushButton_serverShutdown_clicked()
     if (msgBox->exec() == QMessageBox::Yes)
     {
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_SHUTDOWN, -1,
-                               NULL, 0, ids_set_cb, (void*)this, 1);
+                               NULL, 0, ids_set_cb, (void*)this, 3);
         if (mMsgRet != MSG_EXECUTE_OK)
             qDebug() << QString().sprintf("ids cmd shut down error. code = %d.", mMsgRet);
     }

@@ -286,12 +286,12 @@ void idsServer::idsSceneListRelease(void)
 void idsServer::idsRefresh(void)
 {
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_LAYOUT, -1,
-                           NULL, 0, layout_get_cb, (void*)this, 1);
+                           NULL, 0, layout_get_cb, (void*)this, 3);
     if (mMsgRet != MSG_EXECUTE_OK)
         qDebug() << QString().sprintf("ids cmd get layout error. code = %d.", mMsgRet);
 
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_IPC_CFG, -1,
-                           NULL, 0, ipc_cfg_get_cb, (void*)this, 1);
+                           NULL, 0, ipc_cfg_get_cb, (void*)this, 3);
     if (mMsgRet != MSG_EXECUTE_OK)
         qDebug() << QString().sprintf("ids get ipc cfg error. code = %d.", mMsgRet);
 
@@ -400,7 +400,7 @@ void idsServer::sceneSwitchSlot(void)
     {
         mLayoutAll.id = mSceneGroup->checkedAction()->whatsThis().toInt();
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SET_LAYOUT, -1,
-                               &mLayoutAll, sizeof(IdsLayoutAll), ids_set_cb, (void*)this, 1);
+                               &mLayoutAll, sizeof(IdsLayoutAll), ids_set_cb, (void*)this, 3);
         if (mMsgRet != MSG_EXECUTE_OK)
             qDebug() << QString().sprintf("ids cmd set layout cfg error. code = %d.", mMsgRet);
     }
@@ -445,7 +445,7 @@ void idsServer::aboutSlot(void)
 {
     mLayoutAll.id = mSceneGroup->checkedAction()->whatsThis().toInt();
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_SERVER_INFO, -1,
-                           NULL, 0, server_info_get_cb, (void*)this, 1);
+                           NULL, 0, server_info_get_cb, (void*)this, 3);
     if (mMsgRet != MSG_EXECUTE_OK)
         qDebug() << QString().sprintf("ids cmd set server info error. code = %d.", mMsgRet);
     else
@@ -468,7 +468,7 @@ void idsServer::rebootSlot(void)
     {
         idsPlayerStop();
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_REBOOT, -1,
-                               NULL, 0, ids_set_cb, (void*)this, 1);
+                               NULL, 0, ids_set_cb, (void*)this, 3);
         if (mMsgRet != MSG_EXECUTE_OK)
             qDebug() << QString().sprintf("ids cmd reboot error. code = %d.", mMsgRet);
     }
@@ -488,7 +488,7 @@ void idsServer::shutdownSlot(void)
     {
         idsPlayerStop();
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_SHUTDOWN, -1,
-                               NULL, 0, ids_set_cb, (void*)this, 1);
+                               NULL, 0, ids_set_cb, (void*)this, 3);
         if (mMsgRet != MSG_EXECUTE_OK)
             qDebug() << QString().sprintf("ids cmd shut down error. code = %d.", mMsgRet);
     }

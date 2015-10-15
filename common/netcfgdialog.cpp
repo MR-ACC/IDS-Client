@@ -68,7 +68,7 @@ qDebug() << mNetInfo.gw;
                         , sizeof(mNetInfo)
                         , msg_callback_dummy
                         , NULL
-                        , 1);
+                        , 3);
             return ;
         }
     }
@@ -104,7 +104,7 @@ int NetCfgDialog::idsUpdate(gpointer  endpoint)
                     , 0
                     , get_netinfo_cb
                     , this
-                    , 1);
+                    , 3);
 
     if (!mNetInfo.flag)
     {

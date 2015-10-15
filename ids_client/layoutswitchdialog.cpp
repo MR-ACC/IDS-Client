@@ -63,7 +63,7 @@ void layoutSwitchDialog::on_buttonBox_accepted()
     else
         mlayout.id = ui->comboBox->currentIndex();
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SET_LAYOUT, -1,
-                           &mlayout, sizeof(IdsLayoutAll), layout_set_cb, (void*)this, 1);
+                           &mlayout, sizeof(IdsLayoutAll), layout_set_cb, (void*)this, 3);
     if (mMsgRet == MSG_EXECUTE_OK)
         this->close();
     else
