@@ -225,18 +225,17 @@ void idsServer::closeEvent(QCloseEvent *)
 void idsServer::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
+    QFont font = QApplication::font();
+    QRect rect;
+    QString text;
+
     if (TRUE == mDispmodePreviewFlag)
     {
-        QFont font = QApplication::font();
-        QRect rect;
-        QString text;
-
         painter.setPen(Qt::white);
         font.setPixelSize(30);
         painter.setFont(font);
 
         int i;
-
         for (i=0; i<mDispmodePreview.monitor_nums; i++)
         {
             rect = QRect(mDispmodePreview.monitor_mode_infos[i].pos_x+100,
@@ -249,6 +248,17 @@ void idsServer::paintEvent(QPaintEvent*)
 
             painter.drawText(rect, Qt::AlignCenter, text);
             painter.drawRect(rect);
+        }
+    }
+    else
+    {
+        painter.setPen(Qt::gray);
+        font.setPixelSize(20);
+        painter.setFont(font);
+        if (mLayoutAll.id == -1)
+        {
+            rect = QRect(width()/2-200, height()/2-50, 400, 100);
+            painter.drawText(rect, Qt::AlignCenter, "视频拼接服务器\n请配置摄像机通道和布局");
         }
     }
 }
@@ -456,15 +466,14 @@ void idsServer::netCfgSlot(void)
 
 void idsServer::aboutSlot(void)
 {
-    mLayoutAll.id = mSceneGroup->checkedAction()->whatsThis().toInt();
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_GET_SERVER_INFO, -1,
                            NULL, 0, server_info_get_cb, (void*)this, 3);
     if (mMsgRet != MSG_EXECUTE_OK)
         qDebug() << QString().sprintf("ids cmd set server info error. code = %d.", mMsgRet);
     else
     {
-        QString sys_ver = QString(tr("\n系统版本:")) + QString(mServerInfo.sys_ver);
-        QString soft_ver = QString(tr("\n软件版本:")) + QString(mServerInfo.soft_ver);
+        QString sys_ver = QString(tr("\n系统版本\n")) + QString(mServerInfo.sys_ver);
+        QString soft_ver = QString(tr("\n软件版本\n")) + QString(mServerInfo.soft_ver);
         QMessageBox::about(this, tr("关于"), tr("视频拼接服务器\n") + sys_ver + soft_ver);
     }
 }

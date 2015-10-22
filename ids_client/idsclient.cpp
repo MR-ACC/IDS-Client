@@ -124,8 +124,8 @@ void idsclient::connect_server(int prompt_first)
         }
         else
         {
-            QString sys_ver = QString(tr("服务器系统版本:")) + QString(mServerInfo.sys_ver);
-            QString soft_ver = QString(tr("服务器软件版本:")) + QString(mServerInfo.soft_ver);
+            QString sys_ver = QString(tr("系统:  ")) + QString(mServerInfo.sys_ver);
+            QString soft_ver = QString(tr("软件:  ")) + QString(mServerInfo.soft_ver);
 //            QMessageBox::about(this, tr("关于"), tr("视频拼接服务器\n") + sys_ver + soft_ver);
             ui->label_serverInfo->setText(sys_ver + soft_ver);
         }
@@ -251,7 +251,6 @@ void idsclient::on_pushButton_serverReboot_clicked()
                                           , tr("是否确认重启服务器?")
                                           , QMessageBox::Yes | QMessageBox::No
                                           , NULL);
-    msgBox->setWindowFlags(Qt::FramelessWindowHint);
     if (msgBox->exec() == QMessageBox::Yes)
     {
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_REBOOT, -1,
@@ -270,7 +269,6 @@ void idsclient::on_pushButton_serverShutdown_clicked()
                                           , tr("是否确认关闭服务器?")
                                           , QMessageBox::Yes | QMessageBox::No
                                           , NULL);
-    msgBox->setWindowFlags(Qt::FramelessWindowHint);
     if (msgBox->exec() == QMessageBox::Yes)
     {
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_SHUTDOWN, -1,
