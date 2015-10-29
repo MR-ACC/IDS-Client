@@ -90,7 +90,7 @@ void VideoWidget::startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags
     }
 
     mPlayerFlags = player_flags;
-    int i;
+    gint i;
     mStatusText = QString("连接中...");
     for (i=0; i<mNums; i++)
     {
@@ -171,11 +171,11 @@ void VideoWidget::paintEvent(QPaintEvent* event)
             return;
         }
         QPixmap pixmap = QPixmap::fromImage( image.scaled(size(), Qt::KeepAspectRatio) );
-        int w = width()-2;
-        int h = height()-2;
+        gint w = width()-2;
+        gint h = height()-2;
         double ratio = MIN((double)w/mImgInfoClone.width, (double)h/mImgInfoClone.height);
-        int dx = (w - ratio * mImgInfoClone.width) / 2;
-        int dy = (h - ratio * mImgInfoClone.height) / 2;
+        gint dx = (w - ratio * mImgInfoClone.width) / 2;
+        gint dy = (h - ratio * mImgInfoClone.height) / 2;
         painter.drawPixmap(dx+1,dy+1, pixmap);
     }
 #endif
@@ -287,6 +287,7 @@ void VideoWidget::playerThreadFunc()
     }
     else
     {
+        gint streams_status = ids_play_get_streams_status(mPlayer);
         if (ret > 0) //ret > 0 but ret <nums means stitching failed, some of the urls is not actived.
         {
             Q_ASSERT(mPlayer != NULL);
@@ -297,11 +298,15 @@ void VideoWidget::playerThreadFunc()
         if (ret != mNums)
         {
             status = QString("连接失败");
-            int i;
+            gint i;
             for (i=0; i<mNums; i++)
             {
                 status += QString("\n");
                 status += QString(mUrls[i]);
+                if (streams_status > 0 && (streams_status & (1<<i)))
+                    status += " (连接)";
+                else
+                    status += " (未连接)";
             }
         }
         else if ( ( 0 != (mPlayerFlags & IDS_TYPE(IDS_TYPE_STITCH)) ) &&
@@ -350,7 +355,7 @@ void VideoWidget::initializeGL() {
     glClearColor(0, 0, 0, 0);
 }
 
-void VideoWidget::resizeGL(int w, int h) {
+void VideoWidget::resizeGL(gint w, gint h) {
     glViewport(0, 0, w, h);
     glLoadIdentity();
 }
