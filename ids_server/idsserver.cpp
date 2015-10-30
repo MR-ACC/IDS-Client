@@ -103,6 +103,10 @@ idsServer::idsServer(QWidget *parent) :
     setGeometry(0, 0, QApplication::desktop()->width(), QApplication::desktop()->height());
     setWindowFlags(Qt::FramelessWindowHint);
 
+    mReconnect = new QAction(tr("重连"), this);
+    mReconnect->setIcon(QIcon(":/image/reboot.ico"));
+    connect(mReconnect, SIGNAL(triggered()), this, SLOT(idsReconnectSlot()));
+
     mChnCfg = new QAction(tr("通道配置"), this);
     mChnCfg->setIcon(QIcon(":/image/ipc.ico"));
     connect(mChnCfg, SIGNAL(triggered()), this, SLOT(chnCfgSlot()));
@@ -142,11 +146,14 @@ idsServer::idsServer(QWidget *parent) :
         mSceneList[i] = NULL;
 
     mMainMenu = new QMenu();  //创建主菜单
+    mMainMenu->addAction(mReconnect);               //把action项放入主菜单中
+    mMainMenu->addSeparator();
+    mMainMenu->addSeparator();
     mSceneSwitchMenu = mMainMenu->addMenu(tr("选择布局"));   //在主菜单中创建子菜单one pictures
     mSceneSwitchMenu->setIcon(QIcon(":/image/scene.ico"));
     mMainMenu->addSeparator();
     mMainMenu->addSeparator();
-    mMainMenu->addAction(mChnCfg);               //把action项放入主菜单中
+    mMainMenu->addAction(mChnCfg);                   //把action项放入主菜单中
     mMainMenu->addSeparator();
     mMainMenu->addSeparator();
     mMainMenu->addAction(mLayoutCfg);               //把action项放入主菜单中
@@ -213,6 +220,7 @@ idsServer::~idsServer()
     delete mDispmodeCfg;
     delete mLayoutCfg;
     delete mChnCfg;
+    delete mReconnect;
     delete ui;
 }
 
@@ -416,6 +424,14 @@ void idsServer::cursorHideSlot(void)
     }
 }
 
+void idsServer::idsReconnectSlot(void)
+{
+    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_AMP_REFRESH, -1,
+                           NULL, 0, ids_set_cb, (void*)this, 3);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        qDebug() << QString().sprintf("ids reconnect error. code = %d.", mMsgRet);
+}
+
 void idsServer::sceneSwitchSlot(void)
 {
     mMutex.lock();
@@ -520,9 +536,9 @@ void idsServer::contextMenuEvent(QContextMenuEvent *e)
 {
     if (true == mMutex.tryLock())
     {
+        mCursorTimer.stop();
         mCursorStatus = 1;
         QApplication::setOverrideCursor(Qt::ArrowCursor);
-        mCursorTimer.stop();
 
         idsRefresh();
         idsSceneListRelease();

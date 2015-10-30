@@ -48,6 +48,7 @@ private slots:
     void idsPlayerHideSlot(void);
     void idsPlayerShowSlot(void);
     void cursorHideSlot(void);
+    void idsReconnectSlot(void);
     void sceneSwitchSlot(void);
     void chnCfgSlot(void);
     void layoutCfgSlot(void);
@@ -70,6 +71,7 @@ private:
     Ui::idsServer       *ui;
     QMenu               *mMainMenu;                      //主菜单
     QMenu               *mSceneSwitchMenu;               //二级菜单
+    QAction             *mReconnect;
     QAction             *mChnCfg;
     QAction             *mLayoutCfg;
     QAction             *mDispmodeCfg;
