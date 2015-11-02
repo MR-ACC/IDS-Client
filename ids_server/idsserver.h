@@ -61,6 +61,7 @@ private slots:
 protected:
     void paintEvent(QPaintEvent*);
     void closeEvent(QCloseEvent *);
+    void mousePressEvent(QMouseEvent *);
 
 private:
     void idsRefresh(void);

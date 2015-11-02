@@ -271,6 +271,14 @@ void idsServer::paintEvent(QPaintEvent*)
     }
 }
 
+void idsServer::mousePressEvent(QMouseEvent *event)
+{
+    mCursorTimer.stop();
+    mCursorStatus = 1;
+    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    mCursorTimer.start(1000*10);
+}
+
 void idsServer::idsSceneListCreate(void)
 {
     Q_ASSERT(mSceneNum == 0);
