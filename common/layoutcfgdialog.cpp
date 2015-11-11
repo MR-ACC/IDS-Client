@@ -68,74 +68,18 @@ layoutCfgDialog::layoutCfgDialog(QWidget *parent) :
     mPenGrid =  new QPen(QColor(40,40,40),1);
     mPenGridCenter =  new QPen(QColor(60,60,60),2);
 
-//    //read cfg begin
-//    mlayout.num = 2;
-//    memset(mlayout.layout[0].name, '\0', sizeof(mlayout.layout[0].name));
-//    strcpy(mlayout.layout[0].name, "布局1");
-//    mlayout.layout[0].win[0].x = 0;
-//    mlayout.layout[0].win[0].y = 0;
-//    mlayout.layout[0].win[0].w = 12;
-//    mlayout.layout[0].win[0].h = 4;
-//    mlayout.layout[0].win[0].vid = 0;
-
-//    mlayout.layout[0].win[1].x = 12;
-//    mlayout.layout[0].win[1].y = 0;
-//    mlayout.layout[0].win[1].w = 12;
-//    mlayout.layout[0].win[1].h = 4;
-//    mlayout.layout[0].win[1].vid = 1;
-
-//    mlayout.layout[0].win[2].x = 0;
-//    mlayout.layout[0].win[2].y = 4;
-//    mlayout.layout[0].win[2].w = 12;
-//    mlayout.layout[0].win[2].h = 4;
-//    mlayout.layout[0].win[2].vid = 6;
-
-//    mlayout.layout[0].win[3].x = 12;
-//    mlayout.layout[0].win[3].y = 4;
-//    mlayout.layout[0].win[3].w = 12;
-//    mlayout.layout[0].win[3].h = 4;
-//    mlayout.layout[0].win[3].vid = 7;
-
-//    mlayout.layout[0].win[4].w = 0;
-//    this->ui->comboBoxLayoutList->addItem(QString(mlayout.layout[0].name));
-
-//    memset(mlayout.layout[1].name, '\0', sizeof(mlayout.layout[1].name));
-//    strcpy(mlayout.layout[1].name, "布局2");
-//    mlayout.layout[1].win[0].x = 0;
-//    mlayout.layout[1].win[0].y = 0;
-//    mlayout.layout[1].win[0].w = 24;
-//    mlayout.layout[1].win[0].h = 4;
-//    mlayout.layout[1].win[0].vid = 0;
-
-//    mlayout.layout[1].win[1].x = 0;
-//    mlayout.layout[1].win[1].y = 4;
-//    mlayout.layout[1].win[1].w = 12;
-//    mlayout.layout[1].win[1].h = 4;
-//    mlayout.layout[1].win[1].vid = 1;
-
-//    mlayout.layout[1].win[2].x = 12;
-//    mlayout.layout[1].win[2].y = 4;
-//    mlayout.layout[1].win[2].w = 12;
-//    mlayout.layout[1].win[2].h = 4;
-//    mlayout.layout[1].win[2].vid = 6;
-
-//    mlayout.layout[1].win[3].w = 0;
-//    this->ui->comboBoxLayoutList->addItem(QString(mlayout.layout[1].name));
-
-    //    //read cfg end
     mVidList[0] = "拼接摄像机";
     mVidList[1] = "联动摄像机";
-    mVidList[2] = "高点摄像机1";
-    mVidList[3] = "高点摄像机2";
-    mVidList[4] = "高点摄像机3";
-    mVidList[5] = "高点摄像机4";
-
-    for(int i = 6; i < 70; i++)
+    for(int i = 0; i < IPC_CFG_STITCH_CNT; i++)
     {
-        mVidList[i] = "低点摄像机" + QString::number(i - 5);
+        mVidList[i + 2] = "高点摄像机" + QString::number(i + 1);
+    }
+    for(int i = 0; i < IPC_CFG_NORMAL_CNT; i++)
+    {
+        mVidList[i + IPC_CFG_STITCH_CNT + 2] = "低点摄像机" + QString::number(i + 1);
     }
 
-    on_comboBoxCameraType_currentIndexChanged(this->ui->comboBoxCameraType->currentIndex());
+    on_comboBoxCameraType_activated(this->ui->comboBoxCameraType->currentIndex());
 }
 
 layoutCfgDialog::~layoutCfgDialog()
@@ -252,7 +196,7 @@ void layoutCfgDialog::paintEvent(QPaintEvent *event)
                 else if(this->ui->comboBoxCameraType->currentIndex() == 1)
                     mlayout.layout[mlayout.num].win[mWinCount].vid = 2 + this->ui->comboBoxChannel->currentIndex();
                 else
-                    mlayout.layout[mlayout.num].win[mWinCount].vid = 6 + this->ui->comboBoxChannel->currentIndex();
+                    mlayout.layout[mlayout.num].win[mWinCount].vid = 2 + IPC_CFG_STITCH_CNT + this->ui->comboBoxChannel->currentIndex();
 
                 QRect rect(drawX*minWidth + 2,drawY*minWidth + 2,drawW*minWidth - 4,drawH*minWidth - 4);
                 pp.setPen(*mPenSelected); //设置画笔形式
@@ -536,7 +480,7 @@ void layoutCfgDialog::on_btnDoneNew_clicked()
     this->ui->labelChannel->setEnabled(false);
     this->ui->comboBoxCameraType->setEnabled(false);
     this->ui->comboBoxChannel->setEnabled(false);
-    mCurSelectedWin = -1;
+    //mCurSelectedWin = -1;
     mlayout.num++;
 }
 
@@ -558,7 +502,7 @@ void layoutCfgDialog::on_btnCancelNew_clicked()
         mlayout.layout[mlayout.num].win[i].w = 0;
 
     this->ui->comboBoxLayoutList->removeItem(this->ui->comboBoxLayoutList->currentIndex());
-    mCurSelectedWin = -1;
+    //mCurSelectedWin = -1;
     update();
 }
 
@@ -592,7 +536,7 @@ void layoutCfgDialog::on_comboBoxLayoutList_currentIndexChanged(int index)
     update();
 }
 
-void layoutCfgDialog::on_comboBoxCameraType_currentIndexChanged(int index)
+void layoutCfgDialog::on_comboBoxCameraType_activated(int index)
 {
     this->ui->comboBoxChannel->clear();
 
@@ -600,18 +544,19 @@ void layoutCfgDialog::on_comboBoxCameraType_currentIndexChanged(int index)
         this->ui->comboBoxChannel->addItem(mVidList[0]);
     else if(index == 1)
     {
-        this->ui->comboBoxChannel->addItem(mVidList[2]);
-        this->ui->comboBoxChannel->addItem(mVidList[3]);
-        this->ui->comboBoxChannel->addItem(mVidList[4]);
-        this->ui->comboBoxChannel->addItem(mVidList[5]);
+        for(int i = 0; i < IPC_CFG_STITCH_CNT; i++)
+        {
+            this->ui->comboBoxChannel->addItem(mVidList[i + 2]);
+        }
     }
     else if(index == 2)
     {
-        for(int i = 0; i < 64; i++)
+        for(int i = 0; i < IPC_CFG_NORMAL_CNT; i++)
         {
-            this->ui->comboBoxChannel->addItem(mVidList[i+6]);
+            this->ui->comboBoxChannel->addItem(mVidList[i + IPC_CFG_STITCH_CNT + 2]);
         }
     }
+    on_comboBoxChannel_activated(this->ui->comboBoxChannel->currentIndex());
 }
 
 void layoutCfgDialog::on_btnDel_clicked()
@@ -639,7 +584,7 @@ void layoutCfgDialog::on_btnDel_clicked()
     }
 }
 
-void layoutCfgDialog::on_comboBoxChannel_currentIndexChanged(int index)
+void layoutCfgDialog::on_comboBoxChannel_activated(int index)
 {
     //qDebug()<<"mCurSelectedWin: "<<mCurSelectedWin<<"  mCurSelectedLayout: "<<mCurSelectedLayout;
     if(mCurSelectedWin != -1)
@@ -649,7 +594,7 @@ void layoutCfgDialog::on_comboBoxChannel_currentIndexChanged(int index)
         else if(this->ui->comboBoxCameraType->currentIndex() == 1)
             mlayout.layout[mCurSelectedLayout].win[mCurSelectedWin].vid = 2 + index;
         else
-            mlayout.layout[mCurSelectedLayout].win[mCurSelectedWin].vid = 6 + index;
+            mlayout.layout[mCurSelectedLayout].win[mCurSelectedWin].vid = 2 + IPC_CFG_STITCH_CNT + index;
 
         isChangeWinChannel = true;
         update();
@@ -705,7 +650,7 @@ void layoutCfgDialog::on_buttonBox_accepted()
     {
         QString text;
         text.sprintf("布局设置失败. 错误码: %d", mMsgRet);
-        QMessageBox::information(this, "提示", text, QMessageBox::Yes, NULL);
+        QMessageBox::information(this, tr("提示"), text);
     }
 }
 
@@ -745,3 +690,4 @@ void layoutCfgDialog::on_btnModify_clicked(bool checked)
         this->ui->btnModify->setText("修改");
 
 }
+

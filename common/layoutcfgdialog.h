@@ -45,11 +45,7 @@ private slots:
 
     void on_comboBoxLayoutList_currentIndexChanged(int index);
 
-    void on_comboBoxCameraType_currentIndexChanged(int index);
-
     void on_btnDel_clicked();
-
-    void on_comboBoxChannel_currentIndexChanged(int index);
 
     void msgslot(int i);
 
@@ -58,6 +54,10 @@ private slots:
     void on_buttonBox_rejected();
 
     void on_btnModify_clicked(bool checked);
+
+    void on_comboBoxCameraType_activated(int index);
+
+    void on_comboBoxChannel_activated(int index);
 
 private:
     Ui::layoutCfgDialog *ui;
@@ -75,7 +75,7 @@ private:
     bool isChangeWinChannel;
     int mCurSelectedWin;
     int mCurSelectedLayout;
-    QString mVidList[70];
+    QString mVidList[IPC_CFG_MAX_CNT + 2];
     QBrush *mBrushEmpty;
     QBrush *mBrushFull;
     QPen *mPenNotSelected;
