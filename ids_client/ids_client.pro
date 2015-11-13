@@ -60,5 +60,5 @@ ROOT_LIB_DIR = $$ROOT_DIR/winlib/win32/lib
 ROOT_INC_DIR = $$ROOT_DIR/inc
 
 INCLUDEPATH += $$ROOT_INC_DIR $$ROOT_DIR/winlib/win32/include/glib-2.0 $$ROOT_DIR/winlib/win32/lib/glib-2.0/include
-LIBS += -L$$ROOT_LIB_DIR -lids_fw -lmodules_core  -Wl,-rpath,$$ROOT_LIB_DIR
+LIBS += -L$$ROOT_LIB_DIR -lids_fw -lmodules_core
 }
