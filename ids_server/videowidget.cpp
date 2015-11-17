@@ -41,6 +41,8 @@ VideoWidget::~VideoWidget()
 {
     if (mImgInfoClone.buf)
         free(mImgInfoClone.buf);
+    //if (mImgInfoClone.cv_img)
+        //delete (GpuMat *)(mImgInfoClone.cv_img);
 }
 
 void VideoWidget::startPlay(gchar *rtsp_url)
@@ -61,12 +63,16 @@ void VideoWidget::startPlay(gchar *rtsp_urls[], gint nums)
     {
         player_flags = 0;
         win_flags = 0;
+#ifdef HAVE_OPENCV_CUDA
+        win_flags |= IDS_ENABLE_CUDA_DECODE_ACCEL;
+#endif
     }
     else
     {
         player_flags = IDS_TYPE(IDS_TYPE_STITCH);
         win_flags = IDS_USE_THE_SAME_WINDOW;
     #ifdef HAVE_OPENCV_CUDA
+        win_flags |= IDS_ENABLE_CUDA_DECODE_ACCEL;
         win_flags |= IDS_ENABLE_CV_CUDA_ACCEL;
     #endif
     }
@@ -125,7 +131,7 @@ void VideoWidget::startPlayExperts(gchar *rtsp_urls[], gint nums, gint win_flags
 void VideoWidget::stopPlay()
 {
     mMutex.lock();
-    mImgMutex.lock();
+//    mImgMutex.lock();
 
     mUpdateFlag = false;
     mTimer.stop();
@@ -135,7 +141,7 @@ void VideoWidget::stopPlay()
         mPlayer = NULL;
     }
 
-    mImgMutex.unlock();
+//    mImgMutex.unlock();
     mMutex.unlock();
 }
 
@@ -183,11 +189,11 @@ void VideoWidget::paintEvent(QPaintEvent* event)
 
 void VideoWidget::frameCallbackFunc(ImageInfo *piinfo)
 {
-    mMutex.lock();
+//    mMutex.lock();
 
     if (false == mImgMutex.tryLock())
     {
-        mMutex.unlock();
+//        mMutex.unlock();
         return;
     }
 
@@ -223,7 +229,7 @@ void VideoWidget::frameCallbackFunc(ImageInfo *piinfo)
     }
     mImgMutex.unlock();
 
-    mMutex.unlock();
+//    mMutex.unlock();
 }
 
 void VideoWidget::renderFrameSlot()
