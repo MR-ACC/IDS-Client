@@ -4,7 +4,7 @@
 #define HAVE_OPENCV_OPENGL
 #define HAVE_OPENCV_CUDA
 
-#define TIME_PER_FRAME 30
+#define TIME_PER_FRAME 1
 
 #include "ids.h"
 #include "app_amp.h"
