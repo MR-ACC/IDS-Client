@@ -38,9 +38,9 @@ private slots:
 
     void on_pushButton_serverReboot_clicked();
 
-    void on_pushButton_serverShutdown_clicked();
-
     void on_pushButton_layoutSwitch_clicked();
+
+    void on_pushButton_reConnect_clicked();
 
 signals:
     void connect_network(int);

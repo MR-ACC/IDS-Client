@@ -52,7 +52,7 @@ void idsclient::setbtnEnable(bool enable)
     this->ui->pushButton_netcfg->setEnabled(enable);
     this->ui->pushButton_stitch->setEnabled(enable);
     this->ui->pushButton_layoutSwitch->setEnabled(enable);
-    this->ui->pushButton_serverShutdown->setEnabled(enable);
+    this->ui->pushButton_reConnect->setEnabled(enable);
     this->ui->pushButton_serverReboot->setEnabled(enable);
     //this->ui->pushButton_upgrade->setEnabled(enable);
 }
@@ -246,30 +246,24 @@ void idsclient::on_pushButton_stitch_clicked()
 
 void idsclient::on_pushButton_serverReboot_clicked()
 {
+    qDebug()<<"on_pushButton_serverReboot_clicked";
     QMessageBox *msgBox = new QMessageBox(QMessageBox::Warning
-                                          , tr("警告")
-                                          , tr("是否确认重启服务器?")
-                                          , QMessageBox::Yes | QMessageBox::No
-                                          , NULL);
-    if (msgBox->exec() == QMessageBox::Yes)
+                                              , tr("服务器维护")
+                                              , tr("请选择是否需要重启或关闭服务器?")
+                                              , QMessageBox::Save|QMessageBox::Discard|QMessageBox::Cancel
+                                              , NULL);
+    msgBox->setButtonText(QMessageBox::Save, tr("重启"));
+    msgBox->setButtonText(QMessageBox::Discard, tr("关机"));
+    msgBox->setButtonText(QMessageBox::Cancel, tr("取消"));
+    int ret = msgBox->exec();
+    if (ret == QMessageBox::Save)
     {
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_REBOOT, -1,
                                NULL, 0, ids_set_cb, (void*)this, 3);
         if (mMsgRet != MSG_EXECUTE_OK)
             qDebug() << QString().sprintf("ids cmd reboot error. code = %d.", mMsgRet);
     }
-
-    delete msgBox;
-}
-
-void idsclient::on_pushButton_serverShutdown_clicked()
-{
-    QMessageBox *msgBox = new QMessageBox(QMessageBox::Warning
-                                          , tr("警告")
-                                          , tr("是否确认关闭服务器?")
-                                          , QMessageBox::Yes | QMessageBox::No
-                                          , NULL);
-    if (msgBox->exec() == QMessageBox::Yes)
+    else if(ret == QMessageBox::Discard)
     {
         ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_SERVER_SHUTDOWN, -1,
                                NULL, 0, ids_set_cb, (void*)this, 3);
@@ -297,4 +291,12 @@ void idsclient::on_pushButton_layoutSwitch_clicked()
     }
 
     layoutSwitchDlg.exec();
+}
+
+void idsclient::on_pushButton_reConnect_clicked()
+{
+    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_AMP_REFRESH, -1,
+                               NULL, 0, ids_set_cb, (void*)this, 3);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        qDebug() << QString().sprintf("ids reconnect error. code = %d.", mMsgRet);
 }
