@@ -23,6 +23,7 @@ Dialog::Dialog(QWidget *parent, QString ip) :
     num=150;
     this->ui->label->setVisible(false);
     this->ui->lineEditTag->setVisible(false);
+    this->ui->radioButton_soft->setChecked(true);
 }
 
 Dialog::~Dialog()
@@ -33,9 +34,11 @@ Dialog::~Dialog()
 void Dialog::on_pushButtonBrow_clicked()
 {
     QString filter; 
-    filter = ".fw";
+    filter = ".img)";
+    if(this->ui->radioButton_soft->isChecked())
+        filter = ".bin)";
     QString filename;
-    if((filename = QFileDialog::getOpenFileName(this, tr("选择文件"), tr("."), tr("固件 (*.bin)"))) != NULL )
+    if((filename = QFileDialog::getOpenFileName(this, tr("选择文件"), tr("."), tr("固件 (*") + filter)) != NULL )
     {
         ui->lineEditFile->setText(filename);
     }
@@ -53,8 +56,11 @@ void Dialog::on_pushButtonSend_clicked()
     int i = 0;
     int upgradetype = 0;
     ui->upgrade->setEnabled(false);
+    if(this->ui->radioButton_soft->isChecked())
+        upgradetype = ROOTFS;
+    else
+        upgradetype = KERNEL;
 
-    upgradetype = 0;
     num = 5;
 
 

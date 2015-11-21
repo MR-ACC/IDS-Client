@@ -133,7 +133,7 @@ int RWThread::upgradeIPCWithNewMethod()
             file->read(sendbuf, sendlen);
 
             int offset = 0;
-            while((cnt = client->write(sendbuf,sendlen)) != sendlen)
+            while((cnt = client->write(sendbuf+offset,sendlen)) != sendlen)
             {
                 qDebug()<<"write:"<<cnt;
                 sendlen -= cnt;
@@ -146,21 +146,7 @@ int RWThread::upgradeIPCWithNewMethod()
                     goto quit_flag;
                 }
             }
-            if(!client->waitForReadyRead())
-            {
-                emit message(ipaddress + tr(": 升级失败！无法收到摄像机回应，请不要重启服务器，确认网络通畅后，重新升级\r\n"));
-                file->close();
-                emit sig(index);
-                goto quit_flag;
-            }
-            client->read(msg,2);
-            if(strncmp(msg, "OK", 2))
-            {
-                emit message(ipaddress + tr(": 升级失败！交互错误，请不要重启服务器，确认网络通畅后，重新升级\r\n"));
-                file->close();
-                emit sig(index);
-                goto quit_flag;
-            }
+
             hassend += (sendlen + offset);
             //qDebug()<<filelen - hassend;
             Count = hassend*100/filelen;
@@ -179,6 +165,28 @@ int RWThread::upgradeIPCWithNewMethod()
          }while(!file->atEnd());
         file->close();
         emit message(ipaddress + tr(": 传输完成！\r\n"));
+
+        if(!client->waitForReadyRead())
+        {
+            emit message(ipaddress + tr(": 升级失败！无法收到MD5\r\n"));
+            emit sig(index);
+            goto quit_flag;
+        }
+        client->read(msg,5);
+        if(strncmp(msg, "MD5ER", 5) == 0)
+        {
+            emit message(ipaddress + tr(": 升级失败！MD5值验证失败\r\n"));
+            emit sig(index);
+            goto quit_flag;
+        }
+
+        client->read(msg,6);
+        if(strncmp(msg, "PACKER", 6) == 0)
+        {
+            emit message(ipaddress + tr(": 升级失败！写操作失败\r\n"));
+            emit sig(index);
+            goto quit_flag;
+        }
     }
     else
     {

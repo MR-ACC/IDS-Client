@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDebug>
+#include <QFile>
 #include "app_amp.h"
 namespace Ui {
 class stitchDialog;

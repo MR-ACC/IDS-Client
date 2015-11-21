@@ -25,37 +25,35 @@ static void stitch_set_cb(gpointer buf, gint buf_size, gpointer priv)
 }
 void stitchDialog::on_buttonBox_accepted()
 {
-    FILE *fp = fopen(this->ui->lineEditFile->text().toLatin1().data(), "rb");
-    if(fp)
+    QFile *file = new QFile(this->ui->lineEditFile->text());
+    if(file->open(QIODevice::ReadOnly))
     {
-       fseek(fp, 0L, SEEK_END);
-       int len = ftell(fp);
-       fseek(fp, 0L, SEEK_SET);
-       //qDebug()<<"len"<<len;
-       IdsFileUpdate *ifu = (IdsFileUpdate *)malloc(sizeof(IdsFileUpdate)+len);
-       ifu->len = len;
-       strcpy(ifu->path, "stitch.cfg");
-       fread(ifu->buf, 1, len, fp);
-       fclose(fp);
-       //qDebug()<<"ifu->buf"<<ifu->buf;
 
-       ids_net_write_msg_sync(mIdsEndpoint
-               , IDS_CMD_FILE_UPDATE
-               , -1
-               , ifu
-               , sizeof(IdsFileUpdate)+len
-               , stitch_set_cb
-               , (void*)this
-               , 3);
-       free(ifu);
-       if (mMsgRet == MSG_EXECUTE_OK)
-           this->close();
-       else
-       {
-           QString text;
-           text.sprintf("摄像机通道设置失败. 错误码: %d", mMsgRet);
-           QMessageBox::information(this, "提示", text, QMessageBox::Yes, NULL);
-       }
+        int len = file->size();
+        qDebug()<<"len"<<len;
+        IdsFileUpdate *ifu = (IdsFileUpdate *)malloc(sizeof(IdsFileUpdate)+len);
+        ifu->len = len;
+        strcpy(ifu->path, "stitch.cfg");
+        file->read(ifu->buf, len);
+        file->close();
+        ids_net_write_msg_sync(mIdsEndpoint
+                , IDS_CMD_FILE_UPDATE
+                , -1
+                , ifu
+                , sizeof(IdsFileUpdate)+len
+                , stitch_set_cb
+                , (void*)this
+                , 3);
+        free(ifu);
+        if (mMsgRet == MSG_EXECUTE_OK)
+            this->close();
+        else
+        {
+            QString text;
+            text.sprintf("拼接配置设置失败. 错误码: %d", mMsgRet);
+            QMessageBox::information(this, "提示", text, QMessageBox::Yes, NULL);
+        }
+        return;
     }
 }
 
