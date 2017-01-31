@@ -37,6 +37,7 @@ public:
     IdsServerInfo          mServerInfo;
     DisplayModeInfo    mDispmodePreview;
     bool                          mDispmodePreviewFlag;
+    QString                     mSystemVersion;
 
 signals:
     void idsPlayerRestart();

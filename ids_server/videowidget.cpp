@@ -64,7 +64,7 @@ void VideoWidget::startPlay(gchar *rtsp_urls[], gint nums)
         player_flags = 0;
         win_flags = 0;
 #ifdef HAVE_OPENCV_CUDA
-        win_flags |= IDS_ENABLE_CUDA_DECODE_ACCEL;
+        //win_flags |= IDS_ENABLE_CUDA_DECODE_ACCEL;
 #endif
     }
     else
@@ -72,7 +72,7 @@ void VideoWidget::startPlay(gchar *rtsp_urls[], gint nums)
         player_flags = IDS_TYPE(IDS_TYPE_STITCH);
         win_flags = IDS_USE_THE_SAME_WINDOW;
     #ifdef HAVE_OPENCV_CUDA
-        win_flags |= IDS_ENABLE_CUDA_DECODE_ACCEL;
+        //win_flags |= IDS_ENABLE_CUDA_DECODE_ACCEL;
         win_flags |= IDS_ENABLE_CV_CUDA_ACCEL;
     #endif
     }

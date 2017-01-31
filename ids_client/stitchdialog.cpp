@@ -9,10 +9,13 @@ stitchDialog::stitchDialog(QWidget *parent) :
     this->ui->buttonBox->button(QDialogButtonBox::Ok)->setText("确定");
     this->ui->buttonBox->button(QDialogButtonBox::Cancel)->setText("取消");
 
+    //加载配置文件
+    defaultSettings  = new QSettings("default.ini", QSettings::IniFormat);
 }
 
 stitchDialog::~stitchDialog()
 {
+    delete defaultSettings;
     delete ui;
 }
 
@@ -26,6 +29,40 @@ static void stitch_set_cb(gpointer buf, gint buf_size, gpointer priv)
 void stitchDialog::on_buttonBox_accepted()
 {
     QFile *file = new QFile(this->ui->lineEditFile->text());
+    if(file->open(QIODevice::ReadOnly))
+    {
+
+        int len = file->size();
+        qDebug()<<"len"<<len;
+        IdsFileUpdate *ifu = (IdsFileUpdate *)malloc(sizeof(IdsFileUpdate)+len);
+        ifu->len = len;
+        strcpy(ifu->path, "stitch.cfg");
+        file->read(ifu->buf, len);
+        file->close();
+        ids_net_write_msg_sync(mIdsEndpoint
+                , IDS_CMD_FILE_UPDATE
+                , -1
+                , ifu
+                , sizeof(IdsFileUpdate)+len
+                , stitch_set_cb
+                , (void*)this
+                , 3);
+        free(ifu);
+        if (mMsgRet == MSG_EXECUTE_OK)
+            this->close();
+        else
+        {
+            QString text;
+            text.sprintf("拼接配置设置失败. 错误码: %d", mMsgRet);
+            QMessageBox::information(this, "提示", text, QMessageBox::Yes, NULL);
+        }
+        return;
+    }
+}
+
+void stitchDialog::sendCfgFile(QString fileName)
+{
+    QFile *file = new QFile(fileName);
     if(file->open(QIODevice::ReadOnly))
     {
 

@@ -7,6 +7,8 @@
 #include <QDebug>
 #include <QFile>
 #include "app_amp.h"
+#include<QSettings>
+
 namespace Ui {
 class stitchDialog;
 }
@@ -22,6 +24,8 @@ public:
     gpointer                    mIdsEndpoint;
     int                         mMsgRet;
 
+    void sendCfgFile(QString fileName);
+
 
 private slots:
     void on_buttonBox_accepted();
@@ -32,6 +36,7 @@ private slots:
 
 private:
     Ui::stitchDialog *ui;
+    QSettings *defaultSettings;
 };
 
 #endif // STITCHDIALOG_H

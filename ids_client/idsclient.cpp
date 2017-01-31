@@ -10,7 +10,16 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QDesktopWidget>
+#include<opencv.hpp>
+#include<QDebug>
+
 #define SERVER_PORT 1702
+
+int groupMatrix[][3]=
+{
+    6,5,4,
+    3,2,1
+};
 
 void ids_io_fin_cb(gpointer priv)
 {
@@ -54,15 +63,20 @@ void idsclient::setbtnEnable(bool enable)
     this->ui->pushButton_layoutSwitch->setEnabled(enable);
     this->ui->pushButton_reConnect->setEnabled(enable);
     this->ui->pushButton_serverReboot->setEnabled(enable);
-    //this->ui->pushButton_upgrade->setEnabled(enable);
+    this->ui->pushButton_upgrade->setEnabled(enable);
 }
 
 idsclient::idsclient(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::idsclient)
 {
+    groupIdPre = -1;
+    groupId = 1;
+    xxx=0;
+    yyy=0;
+
     ui->setupUi(this);
-QApplication::setFont(QFont("Times New Roman",14));
+    QApplication::setFont(QFont("Times New Roman",14));
     if (TRUE != ids_core_init())
         throw QString("init core library failed");
 
@@ -73,10 +87,212 @@ QApplication::setFont(QFont("Times New Roman",14));
 
     connect(this, SIGNAL(connect_network(int)), this, SLOT(connect_server(int)));
 
+    //added by zhoushihua
+    roverArea = new RoverArea(ui->openGLWidget);
+
     QDesktopWidget* desktop = QApplication::desktop();
     move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
 
+    //读取ini文件
+    defaultSettings = new QSettings("default.ini", QSettings::IniFormat);
+
+    //网络初始化
+//    port = 9002;
+    udpSocket = new QUdpSocket(this);
+
+
     setbtnEnable(false);
+}
+
+void idsclient::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    //发送消息显示端
+    QString msg = QString::number(ui->openGLWidget->width())+","+QString::number(ui->openGLWidget->height())+","+
+            QString::number(event->globalX())+"," +QString::number(event->globalY())+",";//liyou在结尾加了一个逗号
+    int length =
+            udpSocket->writeDatagram(msg.toLatin1(),
+                                     msg.length(),
+                                     QHostAddress(defaultSettings->value("view/Display_UDP_IP","192.168.1.102").toString()),
+                                     defaultSettings->value("view/Display_UDP_Port",9002).toInt());
+    //return;
+
+    int www = ui->openGLWidget->width()/3;
+    int hhh = ui->openGLWidget->height()/2;
+    xxx = event->globalX() / www;
+    xxx = MAX(xxx,0);
+    xxx = MIN(xxx,2);
+    yyy = event->globalY() / hhh;
+    yyy = MAX(yyy,0);
+    yyy = MIN(yyy,1);
+
+    roverArea->xxx = xxx;
+    roverArea->yyy = yyy;
+    //roverArea->www = www;
+    //roverArea->hhh = hhh;
+    roverArea->xMouseDbClickPos = event->globalX();
+    roverArea->yMouseDbClickPos = event->globalY();
+
+
+    groupId = groupMatrix[yyy][xxx];
+    if(groupId == groupIdPre)//如果当前选择的组与上一组相同，则返回
+    {
+        return;
+    }
+    groupIdPre = groupId;
+
+    char Ips[4][32];
+    strcpy(Ips[0],"192.168.1.66");
+    strcpy(Ips[1],"192.168.1.68");
+    strcpy(Ips[2],"192.168.1.67");
+    strcpy(Ips[3],"192.168.1.70");
+
+    for(int i=0;i<4;i++)
+    {
+
+        //改通道配置
+        strcpy(mIp,Ips[i]);
+        //emit(connect_network(0));     //连接服务器
+        connect_server(0);//连接服务器
+        if (mIdsEndpoint == NULL)
+        {
+            QMessageBox::information(NULL, tr("提示"), tr("请先连接服务器！"));
+            return ;
+        }
+        int ret;
+        ChnCfgDialog chnCfg;
+        ret = chnCfg.idsUpdate(mIdsEndpoint);//这里会将mIpcCfgAll.ipc_sti[i].url和mIpcCfgAll.ipc[i].url载入到对话框中！！！
+        if (!ret)
+        {
+            QMessageBox::critical(NULL, tr("错误"), "获取通道信息失败!");
+            return ;
+        }
+        chnCfg.setChannels(groupId,i+1);
+        //改拼接配置
+        if (mIdsEndpoint == NULL)
+        {
+            QMessageBox::information(NULL, tr("提示"), tr("请先连接服务器！"));
+            return ;
+        }
+        stitchDialog stitchdlg;
+        ret = stitchdlg.idsUpdate(mIdsEndpoint);
+        if (!ret)
+        {
+            QMessageBox::critical(NULL, tr("错误"), "失败！");
+            return ;
+        }
+        QString fileNme = defaultSettings->value(QString().sprintf("group%d/Server%d_cfgFile",groupId,i+1)).toString();
+        stitchdlg.sendCfgFile(fileNme);
+    }
+
+}
+
+void idsclient::keyPressEvent(QKeyEvent *event)//键盘响应
+{
+    QWidget::keyPressEvent(event);
+    return;
+
+    //QMessageBox::aboutQt(NULL,"ddddd");
+    bool bValid = false;
+    if((QApplication::keyboardModifiers()==Qt::ControlModifier) && (event->key()==Qt::Key_Left))
+    {
+        QMessageBox::aboutQt(NULL,"ddddd");
+        xxx--;
+        if(xxx<0)
+        {
+            xxx=0;
+            return;
+        }
+        bValid = true;
+        groupId = groupMatrix[yyy][xxx];
+    }
+    else if(event->key()==Qt::Key_Right)
+    {
+        xxx++;
+        if(xxx>=3)
+        {
+            xxx=2;
+            return;
+        }
+        bValid = true;
+        groupId = groupMatrix[yyy][xxx];
+    }
+    else if(event->key()==Qt::Key_Up)
+    {
+        yyy--;
+        if(yyy<0)
+        {
+            yyy=0;
+            return;
+        }
+        bValid = true;
+        groupId = groupMatrix[yyy][xxx];
+    }
+    else if(event->key()==Qt::Key_Down)
+    {
+        yyy++;
+        if(yyy>=2)
+        {
+            yyy=1;
+            return;
+        }
+        bValid = true;
+        groupId = groupMatrix[yyy][xxx];
+    }
+
+    if(!bValid)
+    {
+        QWidget::keyPressEvent(event);
+        return;
+    }
+
+    //更换通道ipc.cfg和配置文件sticth.cfg
+    //下面照抄mouseDoubleClickEvent（）
+
+    char Ips[4][32];
+    strcpy(Ips[0],"192.168.1.66");
+    strcpy(Ips[1],"192.168.1.68");
+    strcpy(Ips[2],"192.168.1.67");
+    strcpy(Ips[3],"192.168.1.70");
+
+    for(int i=0;i<4;i++)
+    {
+
+        //改通道配置
+        strcpy(mIp,Ips[i]);
+        //emit(connect_network(0));     //连接服务器
+        connect_server(0);//连接服务器
+        if (mIdsEndpoint == NULL)
+        {
+            QMessageBox::information(NULL, tr("提示"), tr("请先连接服务器！"));
+            return ;
+        }
+        int ret;
+        ChnCfgDialog chnCfg;
+        ret = chnCfg.idsUpdate(mIdsEndpoint);//这里会将mIpcCfgAll.ipc_sti[i].url和mIpcCfgAll.ipc[i].url载入到对话框中！！！
+        if (!ret)
+        {
+            QMessageBox::critical(NULL, tr("错误"), "获取通道信息失败!");
+            return ;
+        }
+        chnCfg.setChannels(groupId,i+1);
+        //改拼接配置
+        if (mIdsEndpoint == NULL)
+        {
+            QMessageBox::information(NULL, tr("提示"), tr("请先连接服务器！"));
+            return ;
+        }
+        stitchDialog stitchdlg;
+        ret = stitchdlg.idsUpdate(mIdsEndpoint);
+        if (!ret)
+        {
+            QMessageBox::critical(NULL, tr("错误"), "失败！");
+            return ;
+        }
+        QString fileNme = defaultSettings->value(QString().sprintf("group%d/Server%d_cfgFile",groupId,i+1)).toString();
+        stitchdlg.sendCfgFile(fileNme);
+    }
+
+    QWidget::keyPressEvent(event);
 }
 
 idsclient::~idsclient()
@@ -84,6 +300,8 @@ idsclient::~idsclient()
     //id_modules_uninit();
     //ids_core_uninit();
     //delete ui;
+
+    delete defaultSettings;
 }
 
 void idsclient::connect_server(int prompt_first)
@@ -129,9 +347,10 @@ void idsclient::connect_server(int prompt_first)
 //            QMessageBox::about(this, tr("关于"), tr("视频拼接服务器\n") + sys_ver + soft_ver);
             ui->label_serverInfo->setText(sys_ver + soft_ver);
         }
-        QMessageBox::information(NULL, tr("提示"), QString().sprintf("连接服务器(%s)成功.", mIp));
+        //QMessageBox::information(NULL, tr("提示"), QString().sprintf("连接服务器(%s)成功.", mIp));
     }
 }
+
 
 void idsclient::on_pushButton_connect_clicked()
 {
@@ -295,6 +514,64 @@ void idsclient::on_pushButton_layoutSwitch_clicked()
 
 void idsclient::on_pushButton_reConnect_clicked()
 {
+    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_AMP_REFRESH, -1,
+                               NULL, 0, ids_set_cb, (void*)this, 3);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        qDebug() << QString().sprintf("ids reconnect error. code = %d.", mMsgRet);
+}
+
+/*
+void idsclient::on_openGLWidget_resized()
+{
+
+}
+*/
+void idsclient::on_pushButton_connect_2_clicked()
+{
+    strcpy(mIp, "192.168.1.66");
+    qDebug() <<"server ip:" << mIp;
+
+    connect_server(0);
+
+    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_AMP_REFRESH, -1,
+                               NULL, 0, ids_set_cb, (void*)this, 3);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        qDebug() << QString().sprintf("ids reconnect error. code = %d.", mMsgRet);
+}
+
+void idsclient::on_pushButton_connect_3_clicked()
+{
+    strcpy(mIp, "192.168.1.68");
+    qDebug() <<"server ip:" << mIp;
+
+    connect_server(0);
+
+    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_AMP_REFRESH, -1,
+                               NULL, 0, ids_set_cb, (void*)this, 3);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        qDebug() << QString().sprintf("ids reconnect error. code = %d.", mMsgRet);
+}
+
+void idsclient::on_pushButton_connect_4_clicked()
+{
+    strcpy(mIp, "192.168.1.67");
+    qDebug() <<"server ip:" << mIp;
+
+    connect_server(0);
+
+    ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_AMP_REFRESH, -1,
+                               NULL, 0, ids_set_cb, (void*)this, 3);
+    if (mMsgRet != MSG_EXECUTE_OK)
+        qDebug() << QString().sprintf("ids reconnect error. code = %d.", mMsgRet);
+}
+
+void idsclient::on_pushButton_connect_5_clicked()
+{
+    strcpy(mIp, "192.168.1.70");
+    qDebug() <<"server ip:" << mIp;
+
+    connect_server(0);
+
     ids_net_write_msg_sync(mIdsEndpoint, IDS_CMD_AMP_REFRESH, -1,
                                NULL, 0, ids_set_cb, (void*)this, 3);
     if (mMsgRet != MSG_EXECUTE_OK)

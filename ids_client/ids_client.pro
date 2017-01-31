@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     upgradethread.cpp \
     ../common/layoutcfgdialog.cpp \
     stitchdialog.cpp \
-    layoutswitchdialog.cpp
+    layoutswitchdialog.cpp \
+    roverarea.cpp
 
 HEADERS  += idsclient.h \
     ../common/displaycfgdialog.h \
@@ -32,7 +33,8 @@ HEADERS  += idsclient.h \
     ../common/layoutcfgdialog.h \
     stitchdialog.h \
     layoutswitchdialog.h \
-    ../common/idsutil.h
+    ../common/idsutil.h \
+    roverarea.h
 
 FORMS    += idsclient.ui \
     ../common/displaycfgdialog.ui \
@@ -61,4 +63,9 @@ ROOT_INC_DIR = $$ROOT_DIR/inc
 
 INCLUDEPATH += $$ROOT_INC_DIR $$ROOT_DIR/winlib/win32/include/glib-2.0 $$ROOT_DIR/winlib/win32/lib/glib-2.0/include
 LIBS += -L$$ROOT_LIB_DIR -lids_fw -lmodules_core
+
+#added by zhoushihua
+INCLUDEPATH += C:/opencv_31/QT_Build/install/include \
+    C:/opencv_31/QT_Build/install/include/opencv C:/opencv_31/QT_Build/install/include/opencv2
+LIBS += C:/opencv_31/QT_Build/install/x86/mingw/lib/libopencv_*
 }

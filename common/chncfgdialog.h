@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include "app_amp.h"
+#include<QSettings>
 
 namespace Ui {
 class ChnCfgDialog;
@@ -25,6 +26,10 @@ private slots:
 
 private:
     Ui::ChnCfgDialog *ui;
+    QSettings *defaultSettings;
+
+public:
+    void setChannels(int nGroup,int nServer);
 };
 
 #endif // CHNCFGDIALOG_H
